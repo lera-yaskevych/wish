@@ -65,12 +65,20 @@ export class ApiError extends Error {
 
 export type Api = {
   getSession: () => Promise<User | null>;
-  signUp: (input: { name: string; email: string; password: string; inviteCode: string }) => Promise<User>;
+  signUp: (input: {
+    name: string;
+    username: string;
+    email: string;
+    password: string;
+    inviteCode: string;
+  }) => Promise<User>;
   logIn: (input: { email: string; password: string }) => Promise<User>;
   logOut: () => Promise<void>;
   // Emails a link that opens the app's reset-password screen, already signed in.
   requestPasswordReset: (email: string) => Promise<void>;
   setPassword: (password: string) => Promise<void>;
+  // For members to pass on in an invite link.
+  getInviteCode: () => Promise<string | null>;
   updateProfile: (patch: { name: string; username: string; birthday: string | null }) => Promise<User>;
 
   listMyWishes: () => Promise<Wish[]>;

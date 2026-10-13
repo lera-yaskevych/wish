@@ -81,6 +81,8 @@ export const uk: Dictionary = {
     logIn: 'Увійти',
     forgot: 'Забули пароль?',
     resetSent: 'Якщо для цієї пошти є акаунт, лист із посиланням для нового пароля вже в дорозі.',
+    username: 'Нікнейм',
+    usernameHint: 'За ним вас знайдуть друзі.',
     inviteCode: 'Код запрошення',
     inviteCodePlaceholder: 'Від того, хто вас запросив',
     newPasswordTitle: ['Оберіть ', 'новий пароль.'],
@@ -189,7 +191,11 @@ export const uk: Dictionary = {
     inviteTitle: 'Друга ще немає тут?',
     inviteBody: 'Надішліть посилання на свій список.',
     share: 'Поділитися',
-    shareMessage: (username) => `Я веду список бажань у застосунку Wishlist. Шукайте мене там: @${username}.`,
+    copied: 'Скопійовано',
+    shareMessage: (username, link) =>
+      link
+        ? `Я веду список бажань у застосунку Wishlist. Приєднуйтесь за посиланням і шукайте мене як @${username}: ${link}`
+        : `Я веду список бажань у застосунку Wishlist. Шукайте мене там: @${username}.`,
   },
 
   profile: {

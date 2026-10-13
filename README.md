@@ -3,7 +3,7 @@
 A small web app for family and friends to keep wishlists. Everyone has their own
 list, follows the people they buy gifts for, and can quietly reserve a wish so
 nobody buys the same thing twice. It runs in the phone's browser and can be added
-to the home screen like an app. English and Ukrainian.
+to the home screen like an app. English, Ukrainian and Turkish.
 
 ## What it does
 
@@ -17,13 +17,13 @@ to the home screen like an app. English and Ukrainian.
   surprise is kept.
 - **Invite only.** Creating an account needs an invite code, so lists are seen only
   by people who were invited.
-- **Languages.** The app follows the phone's language. Switch between English and
-  Ukrainian in your profile, or from the link on the sign-up screen.
+- **Languages.** English, Ukrainian and Turkish. The app follows the phone's
+  language; switch in your profile or from the links on the sign-up screen.
 
 ## Using it
 
-1. Create an account with your name, email, a password and the invite code you
-   were given. You stay signed in.
+1. Create an account with your name, a username, email, a password and the invite
+   code you were given. You stay signed in.
 2. Tap **+** on **My list** to add a wish. Only the first field is required.
 3. Open a wish to edit it, mark it as received, or delete it.
 4. Go to **Friends → Find people**, search for someone and tap **Follow**.
@@ -74,7 +74,7 @@ two values. Without them the app runs on demo data kept in the browser.
 | `src/app/` | The screens. Each file is a page (Expo Router). |
 | `src/components/` | Shared pieces: buttons, fields, wish cards, sheets. |
 | `src/data/` | Accounts and wishes. Screens only talk to `api` in `index.ts`, which uses `supabase.ts` or, when no backend is configured, `local.ts`. |
-| `src/i18n/` | All on-screen text: `en.ts` and `uk.ts`. |
+| `src/i18n/` | All on-screen text, one file per language. |
 | `src/theme.ts` | Colours, fonts and text styles. |
 | `supabase/` | Database tables, access rules and their test. |
 | `public/` | Web app manifest, home-screen icons and the HTML shell. |

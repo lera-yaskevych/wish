@@ -1,15 +1,16 @@
 import { router } from 'expo-router';
 import { Check, Search } from 'lucide-react-native';
 import { useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/Avatar';
 import { BackLink } from '@/components/BackLink';
 import { Button } from '@/components/Button';
 import { useMe } from '@/data/auth';
-import { useFollow, usePeopleSearch, useUnfollow } from '@/data/hooks';
+import { useFollow, useInviteCode, usePeopleSearch, useUnfollow } from '@/data/hooks';
 import { useT } from '@/i18n';
+import { shareText } from '@/lib/share';
 import { colors, fonts, type } from '@/theme';
 
 const FindPeople = () => {
@@ -22,10 +23,20 @@ const FindPeople = () => {
   const follow = useFollow();
   const unfollow = useUnfollow();
 
-  const share = () =>
-    Share.share({
-      message: t.find.shareMessage(me.username),
-    }).catch(() => {});
+  const { data: inviteCode } = useInviteCode();
+  const [copied, setCopied] = useState(false);
+
+  // On the web the app's own address makes a link that opens sign-up with the invite code filled in.
+  const share = async () => {
+    const link =
+      Platform.OS === 'web' && inviteCode
+        ? `${window.location.origin}/sign-up?invite=${encodeURIComponent(inviteCode)}`
+        : null;
+    if ((await shareText(t.find.shareMessage(me.username, link))) === 'copied') {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -97,7 +108,7 @@ const FindPeople = () => {
           <Text style={type.cardTitle}>{t.find.inviteTitle}</Text>
           <Text style={type.sub}>{t.find.inviteBody}</Text>
         </View>
-        <Button label={t.find.share} size="sm" onPress={share} style={styles.share} />
+        <Button label={copied ? t.find.copied : t.find.share} size="sm" onPress={share} style={styles.share} />
       </View>
     </KeyboardAvoidingView>
   );

@@ -43,5 +43,8 @@
     "typecheck": "tsc --noEmit",
     "test:rules": "node supabase/tests/access-rules.mjs"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  }
 }

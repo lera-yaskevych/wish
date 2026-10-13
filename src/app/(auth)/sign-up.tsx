@@ -7,12 +7,16 @@ import { Button } from '@/components/Button';
 import { Field } from '@/components/Field';
 import { useAuth } from '@/data/auth';
 import { errorText, useT } from '@/i18n';
+import { usernameAsTyped, usernameFrom } from '@/lib/username';
 import { fonts, type } from '@/theme';
 
 const SignUp = () => {
   const { signUp } = useAuth();
   const t = useT();
   const [name, setName] = useState('');
+  // Follows the name until the person types a username of their own.
+  const [username, setUsername] = useState('');
+  const [usernameEdited, setUsernameEdited] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   // An invite link (…/sign-up?invite=code) fills this in for the person.
@@ -25,7 +29,7 @@ const SignUp = () => {
     setError(null);
     setBusy(true);
     try {
-      await signUp({ name, email, password, inviteCode });
+      await signUp({ name, username, email, password, inviteCode });
     } catch (caught) {
       setError(errorText(t, caught));
       setBusy(false);
@@ -56,12 +60,31 @@ const SignUp = () => {
           label={t.auth.name}
           placeholder={t.auth.namePlaceholder}
           value={name}
-          onChangeText={setName}
+          onChangeText={(text) => {
+            setName(text);
+            if (!usernameEdited) setUsername(usernameFrom(text));
+          }}
           autoCapitalize="words"
           autoComplete="name"
           textContentType="name"
           returnKeyType="next"
         />
+        <View style={styles.withHint}>
+          <Field
+            label={t.auth.username}
+            value={username}
+            onChangeText={(text) => {
+              setUsernameEdited(true);
+              setUsername(usernameAsTyped(text));
+            }}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="username"
+            textContentType="username"
+            returnKeyType="next"
+          />
+          <Text style={type.small}>{t.auth.usernameHint}</Text>
+        </View>
         <Field
           label={t.auth.email}
           placeholder={t.auth.emailPlaceholder}
@@ -108,4 +131,5 @@ export default SignUp;
 const styles = StyleSheet.create({
   italic: { ...fonts.serifItalic },
   intro: { marginTop: 18 },
+  withHint: { gap: 6 },
 });

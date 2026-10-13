@@ -69,6 +69,8 @@ export const en = {
     logIn: 'Log in',
     forgot: 'Forgot password?',
     resetSent: 'If there’s an account for that email, a link to choose a new password is on its way.',
+    username: 'Username',
+    usernameHint: 'Friends can find you by this name.',
     inviteCode: 'Invite code',
     inviteCodePlaceholder: 'From whoever invited you',
     newPasswordTitle: ['Choose a ', 'new password.'],
@@ -175,7 +177,11 @@ export const en = {
     inviteTitle: 'Friend not here yet?',
     inviteBody: 'Send them a link to your list.',
     share: 'Share',
-    shareMessage: (username: string) => `I keep my wishlist in the Wishlist app. Find me there as @${username}.`,
+    copied: 'Copied',
+    shareMessage: (username: string, link: string | null) =>
+      link
+        ? `I keep my wishlist in the Wishlist app. Join with this link and find me as @${username}: ${link}`
+        : `I keep my wishlist in the Wishlist app. Find me there as @${username}.`,
   },
 
   profile: {

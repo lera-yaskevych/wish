@@ -6,21 +6,28 @@ import { Platform } from 'react-native';
 import { ApiError } from '@/data/types';
 
 import { en, type Dictionary } from './en';
+import { tr } from './tr';
 import { uk } from './uk';
 
-export type Language = 'en' | 'uk';
+export type Language = 'en' | 'uk' | 'tr';
 
 export const languages: { code: Language; label: string }[] = [
   { code: 'en', label: 'English' },
   { code: 'uk', label: 'Українська' },
+  { code: 'tr', label: 'Türkçe' },
 ];
 
-const dictionaries: Record<Language, Dictionary> = { en, uk };
+const dictionaries: Record<Language, Dictionary> = { en, uk, tr };
+
+const isLanguage = (code: unknown): code is Language => languages.some((language) => language.code === code);
 
 const STORAGE_KEY = 'wishlist.language';
 
 // Follows the phone's language until the person picks one in their profile.
-const deviceLanguage = (): Language => (getLocales()[0]?.languageCode === 'uk' ? 'uk' : 'en');
+const deviceLanguage = (): Language => {
+  const code = getLocales()[0]?.languageCode;
+  return isLanguage(code) ? code : 'en';
+};
 
 type LanguageValue = {
   language: Language;
@@ -39,7 +46,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((saved) => {
-        if (saved === 'en' || saved === 'uk') setLanguageState(saved);
+        if (isLanguage(saved)) setLanguageState(saved);
       })
       .catch(() => {})
       .finally(() => setReady(true));

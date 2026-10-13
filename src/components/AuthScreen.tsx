@@ -14,8 +14,8 @@ type Props = {
 export const AuthScreen = ({ children, footer }: Props) => {
   const insets = useSafeAreaInsets();
   const { language, setLanguage } = useLanguage();
-  // Offers the other language, since the profile's switch is out of reach before signing in.
-  const other = languages.find(({ code }) => code !== language)!;
+  // Offers the other languages, since the profile's switch is out of reach before signing in.
+  const others = languages.filter(({ code }) => code !== language);
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
@@ -25,13 +25,18 @@ export const AuthScreen = ({ children, footer }: Props) => {
         <View>
           <View style={styles.top}>
             <Text style={styles.logo}>wishlist.</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={other.label}
-              hitSlop={12}
-              onPress={() => setLanguage(other.code)}>
-              <Text style={styles.language}>{other.label}</Text>
-            </Pressable>
+            <View style={styles.languages}>
+              {others.map(({ code, label }) => (
+                <Pressable
+                  key={code}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                  hitSlop={8}
+                  onPress={() => setLanguage(code)}>
+                  <Text style={styles.language}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
           {children}
         </View>
@@ -54,6 +59,7 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: 28 },
   top: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 },
   logo: { ...fonts.serif, fontSize: 22, color: colors.accent },
+  languages: { flexDirection: 'row', gap: 16 },
   language: { ...fonts.sans, fontSize: 14.5, color: colors.muted },
   footer: { alignItems: 'center', marginTop: 40 },
 });

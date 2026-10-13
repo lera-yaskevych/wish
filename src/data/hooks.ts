@@ -28,6 +28,9 @@ export const usePeopleSearch = (query: string) =>
     placeholderData: (previous) => previous,
   });
 
+export const useInviteCode = () =>
+  useQuery({ queryKey: ['invite-code'], queryFn: api.getInviteCode, staleTime: Infinity });
+
 // Lists are tiny, so every write simply refreshes whatever is on screen.
 const useWrite = <TArgs, TResult>(write: (args: TArgs) => Promise<TResult>) => {
   const queryClient = useQueryClient();

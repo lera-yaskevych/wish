@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { newId, sha256Hex } from '@/lib/ids';
-import { usernameFrom } from '@/lib/username';
 
 import { DEMO_INVITE_CODE, seedUsers } from './seed';
 import { ApiError, type Api, type Profile, type User, type Wish } from './types';
@@ -100,13 +99,6 @@ const requireOwnWish = (db: Db, viewer: StoredUser, id: string) => {
   return wish;
 };
 
-const uniqueUsername = (db: Db, name: string) => {
-  const base = usernameFrom(name);
-  let candidate = base;
-  for (let n = 2; db.users.some((u) => u.username === candidate); n++) candidate = `${base}${n}`;
-  return candidate;
-};
-
 export const localApi: Api = {
   getSession: async () => {
     const db = await loadDb();
@@ -117,14 +109,15 @@ export const localApi: Api = {
 
   signUp: async (input) => {
     const db = await loadDb();
-    const { name, email, inviteCode } = cleanSignUp(input);
+    const { name, username, email, inviteCode } = cleanSignUp(input);
     if (inviteCode.toLowerCase() !== DEMO_INVITE_CODE) throw new ApiError('invalid_invite');
+    if (db.users.some((u) => u.username === username)) throw new ApiError('username_taken');
     if (db.users.some((u) => u.email === email)) throw new ApiError('email_taken');
     const salt = newId();
     const user: StoredUser = {
       id: newId(),
       name,
-      username: uniqueUsername(db, name),
+      username,
       birthday: null,
       email,
       salt,
@@ -160,6 +153,8 @@ export const localApi: Api = {
     viewer.passwordHash = hashPassword(viewer.salt, password);
     await saveDb(db);
   },
+
+  getInviteCode: async () => DEMO_INVITE_CODE,
 
   updateProfile: async (input) => {
     const db = await loadDb();

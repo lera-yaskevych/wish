@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   birthday: { flexDirection: 'row', gap: 12 },
   half: { flex: 1 },
   languageGroup: { gap: 10 },
-  languages: { flexDirection: 'row', gap: 10 },
+  languages: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   language: {
     height: 44,
     paddingHorizontal: 18,

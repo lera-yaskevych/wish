@@ -93,6 +93,35 @@ await test('a taken username gets a number', async () => {
   assert.equal(profile.username, `olena.${run}2`);
 });
 
+await test('the sign-up check names the problem, and only for someone holding the invite code', async () => {
+  const anon = client();
+  const ask = async (code, wanted_username) => (await anon.rpc('signup_check', { code, wanted_username })).data;
+  assert.equal(await ask(INVITE, `fresh.${run}`), 'ok');
+  assert.equal(await ask(INVITE, `olena.${run}`), 'username_taken');
+  assert.equal(await ask(INVITE, 'No Spaces!'), 'invalid_username');
+  // Without the code, a taken username looks the same as a free one.
+  assert.equal(await ask('wrong-code', `olena.${run}`), 'invalid_invite');
+  assert.equal(await ask('wrong-code', `fresh.${run}`), 'invalid_invite');
+});
+
+await test('a full-length username is kept as chosen', async () => {
+  const supabase = client();
+  const username = `${'x'.repeat(17)}.${run}`;
+  const { data, error } = await supabase.auth.signUp({
+    email: `long.${run}@example.com`,
+    password: PASSWORD,
+    options: { data: { name: 'Long', username, invite_code: INVITE } },
+  });
+  assert.equal(error, null);
+  const { data: profile } = await supabase.from('profiles').select('username').eq('id', data.user.id).single();
+  assert.equal(profile.username, username);
+});
+
+await test('members can read the invite code to pass it on; nobody else can', async () => {
+  assert.equal((await owner.supabase.rpc('invite_code')).data, INVITE);
+  assert.ok((await client().rpc('invite_code')).error);
+});
+
 // ---------- people outside the family
 
 await test('someone who is not signed in can read nothing', async () => {

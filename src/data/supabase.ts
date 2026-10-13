@@ -4,7 +4,6 @@ import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 
 import { newId } from '@/lib/ids';
-import { usernameFrom } from '@/lib/username';
 
 import { ApiError, type Api, type ApiErrorCode, type Profile, type User, type Wish } from './types';
 import { checkPassword, cleanEmail, cleanProfile, cleanSignUp, cleanWish } from './validate';
@@ -70,6 +69,12 @@ const AUTH_ERRORS: Record<string, ApiErrorCode> = {
   validation_failed: 'invalid_email',
   invalid_credentials: 'bad_credentials',
   email_not_confirmed: 'confirm_email',
+};
+
+const SIGNUP_REFUSALS: Record<string, ApiErrorCode> = {
+  invalid_invite: 'invalid_invite',
+  invalid_username: 'invalid_username',
+  username_taken: 'username_taken',
 };
 
 // Postgres error codes.
@@ -162,16 +167,19 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
     },
 
     signUp: async (input) => {
-      const { name, email, inviteCode } = cleanSignUp(input);
-      // Checked here for a clear message; the database checks again while creating the account.
-      const invite = await supabase.rpc('invite_ok', { code: inviteCode });
-      check(invite.error);
-      if (!invite.data) throw new ApiError('invalid_invite');
+      const { name, username, email, inviteCode } = cleanSignUp(input);
+      // Asked first for a clear message; the database checks again while creating the account.
+      const verdict = await supabase.rpc('signup_check', { code: inviteCode, wanted_username: username });
+      check(verdict.error);
+      if (verdict.data !== 'ok') {
+        const refusal = SIGNUP_REFUSALS[verdict.data as string];
+        throw refusal ? new ApiError(refusal) : new Error(`signup_check: ${verdict.data}`);
+      }
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password: input.password,
-        options: { data: { name, username: usernameFrom(name), invite_code: inviteCode } },
+        options: { data: { name, username, invite_code: inviteCode } },
       });
       check(error, AUTH_ERRORS);
       // No session means the project still asks people to confirm their email first.
@@ -205,6 +213,12 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
       checkPassword(password);
       const { error } = await supabase.auth.updateUser({ password });
       check(error, AUTH_ERRORS);
+    },
+
+    getInviteCode: async () => {
+      const { data, error } = await supabase.rpc('invite_code');
+      check(error);
+      return (data as string | null) ?? null;
     },
 
     updateProfile: async (input) => {
