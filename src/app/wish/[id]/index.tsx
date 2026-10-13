@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { ArrowUpRight, Bookmark, Check, ChevronLeft, Link as LinkIcon, Pencil, RotateCcw } from 'lucide-react-native';
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -38,11 +38,16 @@ const WishDetail = () => {
   const reserve = useReserve();
   const unreserve = useUnreserve();
 
+  // Where the back button leads when this screen was opened directly and has nothing
+  // beneath it: a friend's wish belongs with their list, your own with yours.
+  const home: Href =
+    wish && wish.ownerId !== me.id ? { pathname: '/friends/[userId]', params: { userId: wish.ownerId } } : '/';
+
   const back = (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={t.common.back}
-      onPress={() => goBack()}
+      onPress={() => goBack(home)}
       style={[styles.round, styles.back, { top: insets.top + 8 }]}>
       <ChevronLeft size={22} color={colors.ink} strokeWidth={2} />
     </Pressable>

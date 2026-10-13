@@ -31,7 +31,7 @@ const FriendList = () => {
       contentContainerStyle={[styles.list, { paddingTop: insets.top + 10 }]}
       ListHeaderComponent={
         <View style={styles.header}>
-          <BackLink label={t.friends.title} fallback="/friends" />
+          <BackLink label={t.friends.title} to="/friends" />
           {profile && (
             <View style={styles.person}>
               <Avatar id={profile.id} name={profile.name} size={56} />

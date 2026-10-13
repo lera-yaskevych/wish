@@ -23,6 +23,13 @@ const FindPeople = () => {
   const follow = useFollow();
   const unfollow = useUnfollow();
 
+  // Search sits on top of the tabs. Closing it first opens the list inside the Friends
+  // tab, where it belongs, instead of stacking a second copy of the tabs over this screen.
+  const openList = (userId: string) => {
+    if (router.canDismiss()) router.dismiss();
+    router.push({ pathname: '/friends/[userId]', params: { userId } });
+  };
+
   const { data: inviteCode } = useInviteCode();
   const [copied, setCopied] = useState(false);
 
@@ -48,7 +55,7 @@ const FindPeople = () => {
         contentContainerStyle={[styles.list, { paddingTop: insets.top + 10 }]}
         ListHeaderComponent={
           <View style={styles.header}>
-            <BackLink label={t.friends.title} fallback="/friends" />
+            <BackLink label={t.friends.title} to="/friends" />
             <Text style={[type.display, styles.title]}>{t.find.title}</Text>
             <View style={[styles.search, searching && styles.searchActive]}>
               <Search size={19} color={colors.muted} strokeWidth={2} />
@@ -75,7 +82,7 @@ const FindPeople = () => {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={item.name}
-              onPress={() => router.push({ pathname: '/friends/[userId]', params: { userId: item.id } })}
+              onPress={() => openList(item.id)}
               style={styles.person}>
               <Avatar id={item.id} name={item.name} size={48} />
               <View style={styles.text}>

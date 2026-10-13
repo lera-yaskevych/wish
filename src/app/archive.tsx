@@ -37,7 +37,7 @@ const ArchiveScreen = () => {
       contentContainerStyle={[styles.list, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 32 }]}
       ListHeaderComponent={
         <View style={styles.header}>
-          <BackLink label={t.tabs.myList} />
+          <BackLink label={t.tabs.myList} to="/" />
           <Text style={[type.display, styles.title]}>{t.archive.title}</Text>
           <Text style={[type.sub, styles.subtitle]}>{t.archive.subtitle}</Text>
         </View>
