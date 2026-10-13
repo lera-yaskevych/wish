@@ -15,12 +15,15 @@ to the home screen like an app. English and Ukrainian.
 - **Reserving.** On a friend's list, reserve a wish you plan to give. Other friends
   see that it is taken, but not by whom. The owner of the list sees nothing, so the
   surprise is kept.
+- **Invite only.** Creating an account needs an invite code, so lists are seen only
+  by people who were invited.
 - **Languages.** The app follows the phone's language. Switch between English and
   Ukrainian in your profile, or from the link on the sign-up screen.
 
 ## Using it
 
-1. Create an account with your name, email and a password. You stay signed in.
+1. Create an account with your name, email, a password and the invite code you
+   were given. You stay signed in.
 2. Tap **+** on **My list** to add a wish. Only the first field is required.
 3. Open a wish to edit it, mark it as received, or delete it.
 4. Go to **Friends → Find people**, search for someone and tap **Follow**.
@@ -31,15 +34,22 @@ to the home screen like an app. English and Ukrainian.
 To keep it on your phone, open it in the browser and choose **Add to Home Screen**
 (Share menu in Safari, the ⋮ menu in Chrome).
 
-## Current state
+## How it is built
 
-This is a working front end on demo data. Accounts, wishes, follows and
-reservations are saved in the browser they were created in and are **not shared
-between devices yet**.
+The app is written with Expo (React Native for Web) and TypeScript. Accounts,
+wishes and photos are stored in [Supabase](https://supabase.com). The tables, and
+the rules for who may see what, are in [`supabase/migrations`](supabase/migrations).
 
-## Running it on your computer
+Three rules are enforced by the database itself:
 
-You need Node 22 (the project has an `.nvmrc`).
+- Only someone with the invite code can sign up.
+- A reservation is visible only to the person who made it. Other friends see that
+  the wish is taken; its owner sees nothing.
+- Once a wish is marked as received, friends no longer see it.
+
+## Running it locally
+
+Needs Node 22.
 
 ```bash
 nvm use
@@ -47,18 +57,15 @@ npm install
 npx expo start --web
 ```
 
-Then open <http://localhost:8081>. To try it on a phone on the same Wi-Fi, open
-`http://<your-computer's-address>:8081`; on a Mac, `ipconfig getifaddr en0` prints
-that address.
+Then open <http://localhost:8081>.
 
-A demo account with a filled-in list and a few friends is defined in
-[`src/data/seed.ts`](src/data/seed.ts). Signing up instead gives you an empty list.
+To connect a Supabase project, copy `.env.example` to `.env.local` and fill in its
+two values. Without them the app runs on demo data kept in the browser.
 
-Before finishing a change, run the type check:
-
-```bash
-npm run typecheck
-```
+| Command | What it does |
+| --- | --- |
+| `npm run typecheck` | Checks the types. |
+| `npm run test:rules` | Checks the access rules against a local Supabase (`npx supabase start`). |
 
 ## Where things live
 
@@ -66,9 +73,8 @@ npm run typecheck
 | --- | --- |
 | `src/app/` | The screens. Each file is a page (Expo Router). |
 | `src/components/` | Shared pieces: buttons, fields, wish cards, sheets. |
-| `src/data/` | Everything about accounts and wishes. Screens only talk to `api` in `index.ts`; `local.ts` is the in-browser version that a real backend will replace. |
-| `src/i18n/` | All on-screen text: `en.ts` and `uk.ts`. Edit wording here. |
+| `src/data/` | Accounts and wishes. Screens only talk to `api` in `index.ts`, which uses `supabase.ts` or, when no backend is configured, `local.ts`. |
+| `src/i18n/` | All on-screen text: `en.ts` and `uk.ts`. |
 | `src/theme.ts` | Colours, fonts and text styles. |
+| `supabase/` | Database tables, access rules and their test. |
 | `public/` | Web app manifest, home-screen icons and the HTML shell. |
-
-Built with Expo (React Native for Web) and TypeScript.

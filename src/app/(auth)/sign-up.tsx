@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -15,6 +15,9 @@ const SignUp = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // An invite link (…/sign-up?invite=code) fills this in for the person.
+  const { invite } = useLocalSearchParams<{ invite?: string }>();
+  const [inviteCode, setInviteCode] = useState(invite ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -22,7 +25,7 @@ const SignUp = () => {
     setError(null);
     setBusy(true);
     try {
-      await signUp({ name, email, password });
+      await signUp({ name, email, password, inviteCode });
     } catch (caught) {
       setError(errorText(t, caught));
       setBusy(false);
@@ -80,6 +83,15 @@ const SignUp = () => {
           autoCapitalize="none"
           autoComplete="new-password"
           textContentType="newPassword"
+          returnKeyType="next"
+        />
+        <Field
+          label={t.auth.inviteCode}
+          placeholder={t.auth.inviteCodePlaceholder}
+          value={inviteCode}
+          onChangeText={setInviteCode}
+          autoCapitalize="none"
+          autoCorrect={false}
           returnKeyType="go"
           onSubmitEditing={submit}
         />

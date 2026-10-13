@@ -22,10 +22,14 @@ const latinize = (text: string) => {
   return out;
 };
 
-export const usernameFrom = (name: string) =>
-  latinize(name)
+export const usernameFrom = (name: string) => {
+  const slug = latinize(name)
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[’']/g, '')
     .replace(/[^a-z0-9]+/g, '.')
-    .replace(/^\.+|\.+$/g, '') || 'friend';
+    .replace(/^\.+|\.+$/g, '');
+  // At most 20 characters leaves room for a number when the name is taken;
+  // very short names are padded to the 3-character minimum.
+  return slug ? slug.slice(0, 20).padEnd(3, '_') : 'friend';
+};

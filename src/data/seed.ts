@@ -3,6 +3,9 @@
 
 export const DEMO_LOGIN = { email: 'valeria@email.com', password: 'wishlist-demo' };
 
+// What the demo store accepts in the sign-up screen's invite field.
+export const DEMO_INVITE_CODE = 'family';
+
 type SeedWish = {
   title: string;
   note?: string;

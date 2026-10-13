@@ -3,8 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { newId, sha256Hex } from '@/lib/ids';
 import { usernameFrom } from '@/lib/username';
 
-import { seedUsers } from './seed';
-import { ApiError, type Api, type Profile, type User, type Wish, type WishInput } from './types';
+import { DEMO_INVITE_CODE, seedUsers } from './seed';
+import { ApiError, type Api, type Profile, type User, type Wish } from './types';
+import { checkPassword, cleanProfile, cleanSignUp, cleanWish } from './validate';
 
 // On-device implementation of the Api. Everything lives in AsyncStorage on this
 // phone only, so accounts and lists are not shared between devices yet.
@@ -106,14 +107,6 @@ const uniqueUsername = (db: Db, name: string) => {
   return candidate;
 };
 
-const cleanInput = (input: WishInput): WishInput => ({
-  title: input.title.trim(),
-  note: input.note?.trim() || null,
-  url: input.url?.trim() || null,
-  price: input.price?.trim() || null,
-  imageUri: input.imageUri || null,
-});
-
 export const localApi: Api = {
   getSession: async () => {
     const db = await loadDb();
@@ -122,25 +115,20 @@ export const localApi: Api = {
     return user ? toUser(user) : null;
   },
 
-  signUp: async ({ name, email, password }) => {
+  signUp: async (input) => {
     const db = await loadDb();
-    const cleanName = name.trim();
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanName) throw new ApiError('name_required');
-    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) throw new ApiError('invalid_email');
-    if (password.length < 8) throw new ApiError('weak_password');
-    if (db.users.some((u) => u.email === cleanEmail)) {
-      throw new ApiError('email_taken');
-    }
+    const { name, email, inviteCode } = cleanSignUp(input);
+    if (inviteCode.toLowerCase() !== DEMO_INVITE_CODE) throw new ApiError('invalid_invite');
+    if (db.users.some((u) => u.email === email)) throw new ApiError('email_taken');
     const salt = newId();
     const user: StoredUser = {
       id: newId(),
-      name: cleanName,
-      username: uniqueUsername(db, cleanName),
+      name,
+      username: uniqueUsername(db, name),
       birthday: null,
-      email: cleanEmail,
+      email,
       salt,
-      passwordHash: hashPassword(salt, password),
+      passwordHash: hashPassword(salt, input.password),
     };
     db.users.push(user);
     await saveDb(db);
@@ -160,20 +148,28 @@ export const localApi: Api = {
 
   logOut: () => AsyncStorage.removeItem(SESSION_KEY),
 
-  updateProfile: async ({ name, username, birthday }) => {
+  // There is no server to send an email from the on-device store.
+  requestPasswordReset: async () => {
+    throw new ApiError('reset_unavailable');
+  },
+
+  setPassword: async (password) => {
     const db = await loadDb();
     const viewer = await requireViewer(db);
-    const cleanName = name.trim();
-    const cleanUsername = username.trim().toLowerCase().replace(/^@/, '');
-    if (!cleanName) throw new ApiError('name_required');
-    if (!/^[a-z0-9._]{3,24}$/.test(cleanUsername)) {
-      throw new ApiError('invalid_username');
-    }
-    if (db.users.some((u) => u.id !== viewer.id && u.username === cleanUsername)) {
+    checkPassword(password);
+    viewer.passwordHash = hashPassword(viewer.salt, password);
+    await saveDb(db);
+  },
+
+  updateProfile: async (input) => {
+    const db = await loadDb();
+    const viewer = await requireViewer(db);
+    const { name, username, birthday } = cleanProfile(input);
+    if (db.users.some((u) => u.id !== viewer.id && u.username === username)) {
       throw new ApiError('username_taken');
     }
-    viewer.name = cleanName;
-    viewer.username = cleanUsername;
+    viewer.name = name;
+    viewer.username = username;
     viewer.birthday = birthday;
     await saveDb(db);
     return toUser(viewer);
@@ -209,8 +205,7 @@ export const localApi: Api = {
   createWish: async (input) => {
     const db = await loadDb();
     const viewer = await requireViewer(db);
-    const clean = cleanInput(input);
-    if (!clean.title) throw new ApiError('title_required');
+    const clean = cleanWish(input);
     const wish: StoredWish = {
       id: newId(),
       ownerId: viewer.id,
@@ -228,9 +223,7 @@ export const localApi: Api = {
     const db = await loadDb();
     const viewer = await requireViewer(db);
     const wish = requireOwnWish(db, viewer, id);
-    const clean = cleanInput(input);
-    if (!clean.title) throw new ApiError('title_required');
-    Object.assign(wish, clean);
+    Object.assign(wish, cleanWish(input));
     await saveDb(db);
     return toWish(wish, viewer.id);
   },

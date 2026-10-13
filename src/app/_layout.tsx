@@ -48,6 +48,7 @@ const RootNavigator = () => {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="archive" />
         <Stack.Screen name="find-people" />
+        <Stack.Screen name="reset-password" />
         <Stack.Screen name="wish/[id]/index" />
         <Stack.Screen name="wish/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="wish/[id]/edit" options={{ presentation: 'modal' }} />

@@ -1,0 +1,27 @@
+# Supabase pauses free projects after a week without activity, so this asks the
+# database one trivial question a day. It is skipped until the repository
+# variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are set.
+
+name: Keep backend awake
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    if: vars.SUPABASE_URL != '' && vars.SUPABASE_PUBLISHABLE_KEY != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the database a trivial question
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/invite_ok" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"code":""}'

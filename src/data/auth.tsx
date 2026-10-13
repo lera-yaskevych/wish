@@ -10,6 +10,8 @@ type AuthValue = {
   signUp: Api['signUp'];
   logIn: Api['logIn'];
   logOut: Api['logOut'];
+  requestPasswordReset: Api['requestPasswordReset'];
+  setPassword: Api['setPassword'];
   updateProfile: Api['updateProfile'];
 };
 
@@ -49,6 +51,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         queryClient.clear();
       },
+      requestPasswordReset: api.requestPasswordReset,
+      setPassword: api.setPassword,
       updateProfile: async (patch) => {
         const next = await api.updateProfile(patch);
         setUser(next);

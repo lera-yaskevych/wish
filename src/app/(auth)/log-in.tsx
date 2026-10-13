@@ -11,7 +11,7 @@ import { errorText, useT } from '@/i18n';
 import { colors, fonts, type } from '@/theme';
 
 const LogIn = () => {
-  const { logIn } = useAuth();
+  const { logIn, requestPasswordReset } = useAuth();
   const t = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +28,21 @@ const LogIn = () => {
     } catch (caught) {
       setError(errorText(t, caught));
       setBusy(false);
+    }
+  };
+
+  const forgot = async () => {
+    setError(null);
+    setNotice(null);
+    if (!email.trim()) {
+      setError(t.errors.email_required);
+      return;
+    }
+    try {
+      await requestPasswordReset(email);
+      setNotice(t.auth.resetSent);
+    } catch (caught) {
+      setError(errorText(t, caught));
     }
   };
 
@@ -77,8 +92,7 @@ const LogIn = () => {
         accessibilityRole="button"
         hitSlop={10}
         style={styles.forgot}
-        // Accounts live on this device for now, so there is no email to send yet.
-        onPress={() => setNotice(t.auth.forgotNotice)}>
+        onPress={forgot}>
         <Text style={styles.forgotText}>{t.auth.forgot}</Text>
       </Pressable>
 

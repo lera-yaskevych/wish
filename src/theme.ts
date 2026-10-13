@@ -67,8 +67,6 @@ export const fonts = {
   bold: face(['InstrumentSans_700Bold'], SANS_FALLBACK, '700'),
 };
 
-export const gutter = 24;
-
 export const type = StyleSheet.create({
   display: { ...fonts.serif, fontSize: 46, lineHeight: 48, letterSpacing: -0.6, color: colors.ink },
   title: { ...fonts.serif, fontSize: 36, lineHeight: 40, letterSpacing: -0.3, color: colors.ink },
