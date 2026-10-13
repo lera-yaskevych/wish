@@ -215,6 +215,21 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
       check(error, AUTH_ERRORS);
     },
 
+    savePushSubscription: async ({ endpoint, p256dh, auth, language }) => {
+      const { error } = await supabase.rpc('save_push_subscription', {
+        p_endpoint: endpoint,
+        p_p256dh: p256dh,
+        p_auth: auth,
+        p_language: language,
+      });
+      check(error);
+    },
+
+    removePushSubscription: async (endpoint) => {
+      const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+      check(error);
+    },
+
     getInviteCode: async () => {
       const { data, error } = await supabase.rpc('invite_code');
       check(error);

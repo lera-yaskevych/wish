@@ -1,6 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { forgetPush } from '@/lib/push';
+
 import { api, type Api, type User } from './index';
 
 type AuthValue = {
@@ -47,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return next;
       },
       logOut: async () => {
+        await forgetPush().catch(() => {});
         await api.logOut();
         setUser(null);
         queryClient.clear();

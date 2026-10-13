@@ -233,6 +233,26 @@ await test('nobody can follow on someone else’s behalf or edit another profile
   assert.deepEqual(edit.data, []);
 });
 
+// ---------- notifications
+
+await test('a device’s push subscription is visible only to its owner and moves with whoever signs in', async () => {
+  const subscription = { p_endpoint: `https://push.example/${run}`, p_p256dh: 'key', p_auth: 'auth', p_language: 'uk' };
+  assert.equal((await anna.supabase.rpc('save_push_subscription', subscription)).error, null);
+  assert.equal((await anna.supabase.from('push_subscriptions').select()).data.length, 1);
+  assert.deepEqual((await owner.supabase.from('push_subscriptions').select()).data, []);
+  assert.ok((await client().rpc('save_push_subscription', subscription)).error);
+  assert.ok((await anna.supabase.rpc('save_push_subscription', { ...subscription, p_language: 'xx' })).error);
+
+  // Someone else signs in on the same phone: the subscription becomes theirs.
+  assert.equal((await bohdan.supabase.rpc('save_push_subscription', subscription)).error, null);
+  assert.deepEqual((await anna.supabase.from('push_subscriptions').select()).data, []);
+  assert.equal((await bohdan.supabase.from('push_subscriptions').select()).data.length, 1);
+
+  const wrongSecret = await client().rpc('remove_push_subscriptions', { secret: 'guess', endpoints: [subscription.p_endpoint] });
+  assert.ok(wrongSecret.error);
+  assert.equal((await bohdan.supabase.from('push_subscriptions').delete().eq('endpoint', subscription.p_endpoint)).error, null);
+});
+
 // ---------- photos
 
 await test('photos go only into your own folder and open by their address', async () => {

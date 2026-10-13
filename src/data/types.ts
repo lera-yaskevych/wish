@@ -77,6 +77,14 @@ export type Api = {
   // Emails a link that opens the app's reset-password screen, already signed in.
   requestPasswordReset: (email: string) => Promise<void>;
   setPassword: (password: string) => Promise<void>;
+  // Web push: remembers how to reach a device, and in which language to write to it.
+  savePushSubscription: (subscription: {
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    language: string;
+  }) => Promise<void>;
+  removePushSubscription: (endpoint: string) => Promise<void>;
   // For members to pass on in an invite link.
   getInviteCode: () => Promise<string | null>;
   updateProfile: (patch: { name: string; username: string; birthday: string | null }) => Promise<User>;

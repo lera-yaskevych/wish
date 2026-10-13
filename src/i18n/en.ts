@@ -193,6 +193,13 @@ export const en = {
     birthdayHint: 'Friends see it next to your name. No year needed.',
     birthdayError: 'That birthday doesn’t look right — use a day and a month, like 2 and 11.',
     language: 'Language',
+    notifications: 'Notifications',
+    notifyNewWishes: 'When someone you follow adds a wish',
+    turnOn: 'Turn on',
+    turnedOn: 'On',
+    notifyInstallHint: 'On iPhone, add Wish to your Home Screen first, then turn this on from there.',
+    notifyBlocked: 'Notifications for this site are blocked in your browser settings.',
+    notifyFailed: 'Notifications couldn’t be turned on. Please try again.',
     logOut: 'Log out',
   },
 };

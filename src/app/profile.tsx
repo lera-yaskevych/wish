@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { Check } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { Field } from '@/components/Field';
-import { Grabber } from '@/components/Sheet';
 import { useAuth, useMe } from '@/data/auth';
 import { errorText, languages, useLanguage } from '@/i18n';
 import { goBack } from '@/lib/nav';
+import { getPushState, turnPushOff, turnPushOn, type PushState } from '@/lib/push';
 import { colors, fonts, type } from '@/theme';
 
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -34,6 +35,34 @@ const Profile = () => {
   const [month, setMonth] = useState(me.birthday ? String(Number(me.birthday.slice(0, 2))) : '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [push, setPush] = useState<PushState>('unsupported');
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushFailed, setPushFailed] = useState(false);
+
+  useEffect(() => {
+    getPushState()
+      .then(setPush)
+      .catch(() => {});
+  }, []);
+
+  const togglePush = async () => {
+    setPushFailed(false);
+    setPushBusy(true);
+    try {
+      setPush(push === 'on' ? await turnPushOff() : await turnPushOn(language));
+    } catch {
+      setPushFailed(true);
+    }
+    setPushBusy(false);
+  };
+
+  const pushHint = pushFailed
+    ? t.profile.notifyFailed
+    : push === 'needs-install'
+      ? t.profile.notifyInstallHint
+      : push === 'blocked'
+        ? t.profile.notifyBlocked
+        : null;
 
   const save = async () => {
     const birthday = parseBirthday(day, month);
@@ -54,8 +83,7 @@ const Profile = () => {
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.top}>
-        <Grabber />
+      <View style={[styles.top, { paddingTop: insets.top + 20 }]}>
         <View style={styles.bar}>
           <Pressable accessibilityRole="button" hitSlop={12} onPress={() => goBack()} style={styles.barSide}>
             <Text style={styles.cancel}>{t.common.cancel}</Text>
@@ -138,6 +166,26 @@ const Profile = () => {
               })}
             </View>
           </View>
+          {push !== 'unsupported' && (
+            <View style={styles.notifyGroup}>
+              <Text style={type.label}>{t.profile.notifications}</Text>
+              <View style={styles.notifyRow}>
+                <Text style={[type.body, styles.notifyText]}>{t.profile.notifyNewWishes}</Text>
+                {(push === 'on' || push === 'off') && (
+                  <Button
+                    label={push === 'on' ? t.profile.turnedOn : t.profile.turnOn}
+                    variant={push === 'on' ? 'outline' : 'accent'}
+                    icon={push === 'on' ? Check : undefined}
+                    size="sm"
+                    loading={pushBusy}
+                    onPress={togglePush}
+                    style={push === 'on' && styles.notifyOn}
+                  />
+                )}
+              </View>
+              {pushHint && <Text style={type.small}>{pushHint}</Text>}
+            </View>
+          )}
           {error && <Text style={styles.error}>{error}</Text>}
         </View>
 
@@ -151,8 +199,8 @@ export default Profile;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  top: { paddingTop: 10, paddingHorizontal: 24 },
-  bar: { flexDirection: 'row', alignItems: 'center', height: 32, marginTop: -6 },
+  top: { paddingHorizontal: 24 },
+  bar: { flexDirection: 'row', alignItems: 'center', height: 32 },
   barSide: { flex: 1 },
   barRight: { alignItems: 'flex-end' },
   barTitle: { ...fonts.semibold, fontSize: 17, color: colors.ink },
@@ -179,5 +227,9 @@ const styles = StyleSheet.create({
   languageSelected: { borderColor: colors.ink, backgroundColor: colors.ink },
   languageLabel: { ...fonts.medium, fontSize: 15.5, color: colors.ink },
   languageLabelSelected: { color: colors.white },
+  notifyGroup: { gap: 8 },
+  notifyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 40 },
+  notifyText: { flex: 1, color: colors.ink },
+  notifyOn: { borderColor: colors.line },
   error: { ...fonts.medium, fontSize: 14.5, lineHeight: 20, color: colors.danger },
 });

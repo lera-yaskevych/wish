@@ -18,11 +18,13 @@ import { View } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/data/auth';
 import { LanguageProvider, useLanguage } from '@/i18n';
+import { syncPush } from '@/lib/push';
 import { colors } from '@/theme';
 
 const RootNavigator = () => {
   const { user, ready } = useAuth();
-  const { ready: languageReady } = useLanguage();
+  const { ready: languageReady, language } = useLanguage();
+  const userId = user?.id;
   const [fontsLoaded] = useFonts({
     InstrumentSerif_400Regular,
     InstrumentSerif_400Regular_Italic,
@@ -36,6 +38,11 @@ const RootNavigator = () => {
   useEffect(() => {
     loadAsync({ CormorantGaramond_500Medium, CormorantGaramond_500Medium_Italic }).catch(() => {});
   }, []);
+
+  // Notifications follow whoever is signed in on this device, in the language they chose.
+  useEffect(() => {
+    if (userId && languageReady) syncPush(language).catch(() => {});
+  }, [userId, language, languageReady]);
 
   if (!ready || !languageReady || !fontsLoaded) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
 

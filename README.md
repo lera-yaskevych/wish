@@ -20,6 +20,8 @@ to the home screen like an app. English, Ukrainian and Turkish.
   surprise is kept.
 - **Invite only.** Creating an account needs an invite code, so lists are seen only
   by people who were invited.
+- **Notifications.** Turn them on in your profile to hear when someone you follow
+  adds a wish. On iPhone this works once the app is on the Home Screen.
 - **Languages.** English, Ukrainian and Turkish. The app follows the phone's
   language; switch in your profile or from the links on the sign-up screen.
 
@@ -45,6 +47,8 @@ The app is written with Expo (React Native for Web) and TypeScript. Accounts,
 wishes and photos are stored in [Supabase](https://supabase.com). The tables, and
 the rules for who may see what, are in [`supabase/migrations`](supabase/migrations).
 It is hosted on [Vercel](https://vercel.com), which redeploys on every push to `main`.
+Notifications are web push: the database calls the function in [`api/push.ts`](api/push.ts)
+whenever a wish is added.
 
 Three rules are enforced by the database itself:
 
@@ -85,4 +89,5 @@ login and invite code are in [`src/data/seed.ts`](src/data/seed.ts).
 | `src/lib/` | Small helpers: usernames, links, photos, sharing. |
 | `src/theme.ts` | Colours, fonts and text styles. |
 | `supabase/` | Database tables, access rules and their test. |
-| `public/` | Web app manifest, home-screen icons and the HTML shell. |
+| `api/` | The server function that sends notifications. |
+| `public/` | Web app manifest, home-screen icons, service worker and the HTML shell. |

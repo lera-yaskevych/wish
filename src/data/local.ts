@@ -154,6 +154,10 @@ export const localApi: Api = {
     await saveDb(db);
   },
 
+  // The demo store has no server to send notifications from.
+  savePushSubscription: async () => {},
+  removePushSubscription: async () => {},
+
   getInviteCode: async () => DEMO_INVITE_CODE,
 
   updateProfile: async (input) => {

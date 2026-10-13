@@ -197,6 +197,13 @@ export const tr: Dictionary = {
     birthdayHint: 'Arkadaşların adının yanında görür. Yıl gerekmez.',
     birthdayError: 'Bu doğum günü doğru görünmüyor — gün ve ay yaz, örneğin 2 ve 11.',
     language: 'Dil',
+    notifications: 'Bildirimler',
+    notifyNewWishes: 'Takip ettiğin biri dilek eklediğinde',
+    turnOn: 'Aç',
+    turnedOn: 'Açık',
+    notifyInstallHint: 'iPhone’da önce Wish’i Ana Ekrana ekle, sonra bildirimleri oradan aç.',
+    notifyBlocked: 'Bu site için bildirimler tarayıcı ayarlarında engellenmiş.',
+    notifyFailed: 'Bildirimler açılamadı. Lütfen tekrar dene.',
     logOut: 'Çıkış yap',
   },
 };
