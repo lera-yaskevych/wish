@@ -54,7 +54,7 @@ export const tr: Dictionary = {
     close: 'Kapat',
   },
 
-  tabs: { myList: 'Listem', friends: 'Arkadaşlar' },
+  tabs: { myList: 'Listem', friends: 'Arkadaşlar', reserved: 'Ayırttıklarım' },
 
   auth: {
     headline: ['Listeni yap.', 'Gerisi arkadaşlarda.'],
@@ -161,6 +161,7 @@ export const tr: Dictionary = {
       count === 0 ? 'Henüz kimseyi takip etmiyorsun' : `${count} kişiyi takip ediyorsun`,
     emptyTitle: 'Burası sessiz.',
     emptyBody: 'Neler istediklerini görmek için aileni ve arkadaşlarını takip et.',
+    birthday: (birthday) => `DG ${dayMonth(birthday)}`,
     subtitle: (profile: Profile) =>
       // "DG" is the everyday short form of "doğum günü"; the full phrase does not fit beside the follow button.
       [wishCount(profile.wishCount), profile.birthday && `DG ${dayMonth(profile.birthday)}`]
@@ -172,6 +173,13 @@ export const tr: Dictionary = {
     following: 'Takiptesin',
     noWishesTitle: 'Henüz dilek yok.',
     noWishesBody: () => 'Bir sonraki özel günden önce tekrar bak.',
+  },
+
+  reserved: {
+    title: 'Ayırttıklarım',
+    count: (gifts, people) => `${people} kişi için ${gifts} hediye`,
+    emptyTitle: 'Henüz bir şey ayırtmadın.',
+    emptyBody: 'Bir arkadaşının listesinden hediye ayırttığında, unutmaman için burada durur.',
   },
 
   find: {

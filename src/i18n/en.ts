@@ -50,7 +50,7 @@ export const en = {
     close: 'Close',
   },
 
-  tabs: { myList: 'My list', friends: 'Friends' },
+  tabs: { myList: 'My list', friends: 'Friends', reserved: 'Reserved' },
 
   auth: {
     // Second part is set in italics.
@@ -158,6 +158,7 @@ export const en = {
       count === 0 ? 'You’re not following anyone yet' : `You follow ${count} ${count === 1 ? 'person' : 'people'}`,
     emptyTitle: 'It’s quiet in here.',
     emptyBody: 'Follow family and friends to see what they’re hoping for.',
+    birthday: (birthday: string) => `birthday ${dayMonth(birthday)}`,
     subtitle: (profile: Profile) =>
       [wishCount(profile.wishCount), profile.birthday && `birthday ${dayMonth(profile.birthday)}`]
         .filter(Boolean)
@@ -168,6 +169,14 @@ export const en = {
     noWishesTitle: 'No wishes yet.',
     noWishesBody: (name: string) =>
       `${firstName(name)} hasn’t added anything. Check back before the next occasion.`,
+  },
+
+  reserved: {
+    title: 'Reserved',
+    count: (gifts: number, people: number) =>
+      `${gifts} ${gifts === 1 ? 'gift' : 'gifts'} for ${people} ${people === 1 ? 'person' : 'people'}`,
+    emptyTitle: 'Nothing reserved yet.',
+    emptyBody: 'When you reserve a gift on a friend’s list, it’s kept here so you don’t lose track.',
   },
 
   find: {

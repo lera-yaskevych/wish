@@ -170,6 +170,17 @@ await test('a friend can reserve; they see "mine", another friend sees "taken"',
   assert.equal(await reservationOf(bohdan.supabase, owner.id, wish.id), 'taken');
 });
 
+await test('the reserver can list their reservations with the wish and its owner; nobody else sees them', async () => {
+  const overview = 'wish:wishes(*, owner:profiles!owner_id(id, name, username, birthday))';
+  const mine = await anna.supabase.from('reservations').select(overview);
+  assert.equal(mine.error, null);
+  assert.equal(mine.data.length, 1);
+  assert.equal(mine.data[0].wish.title, 'Hiking poles');
+  assert.equal(mine.data[0].wish.owner.name, 'Olena');
+  assert.deepEqual((await bohdan.supabase.from('reservations').select(overview)).data, []);
+  assert.deepEqual((await owner.supabase.from('reservations').select(overview)).data, []);
+});
+
 await test('the owner is told nothing about the reservation', async () => {
   assert.equal(await reservationOf(owner.supabase, owner.id, wish.id), 'none');
   const single = await owner.supabase.rpc('wishes_visible', { p_wish: wish.id });

@@ -17,7 +17,7 @@ to the home screen like an app. English, Ukrainian and Turkish.
   lists one tap away.
 - **Reserving.** On a friend's list, reserve a wish you plan to give. Other friends
   see that it is taken, but not by whom. The owner of the list sees nothing, so the
-  surprise is kept.
+  surprise is kept. The Reserved tab lists everything you have promised to give.
 - **Invite only.** Creating an account needs an invite code, so lists are seen only
   by people who were invited.
 - **Notifications.** Turn them on in your profile to hear when someone you follow

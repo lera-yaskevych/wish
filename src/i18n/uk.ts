@@ -63,7 +63,7 @@ export const uk: Dictionary = {
     close: 'Закрити',
   },
 
-  tabs: { myList: 'Мій список', friends: 'Друзі' },
+  tabs: { myList: 'Мій список', friends: 'Друзі', reserved: 'Заброньовано' },
 
   auth: {
     headline: ['Складіть список.', 'Решту зроблять друзі.'],
@@ -172,6 +172,7 @@ export const uk: Dictionary = {
         : `Ви стежите за ${count} ${plural(count, 'людиною', 'людьми', 'людьми')}`,
     emptyTitle: 'Тут поки тихо.',
     emptyBody: 'Стежте за рідними та друзями, щоб бачити, про що вони мріють.',
+    birthday: (birthday) => `ДН ${dayMonth(birthday)}`,
     subtitle: (profile: Profile) =>
       [wishCount(profile.wishCount), profile.birthday && `ДН ${dayMonth(profile.birthday)}`]
         .filter(Boolean)
@@ -182,6 +183,14 @@ export const uk: Dictionary = {
     following: 'Стежите',
     noWishesTitle: 'Бажань поки немає.',
     noWishesBody: () => 'Зазирніть сюди перед наступним святом.',
+  },
+
+  reserved: {
+    title: 'Заброньовано',
+    count: (gifts, people) =>
+      `${gifts} ${plural(gifts, 'подарунок', 'подарунки', 'подарунків')} для ${people} ${plural(people, 'людини', 'людей', 'людей')}`,
+    emptyTitle: 'Поки нічого не заброньовано.',
+    emptyBody: 'Коли ви забронюєте подарунок у списку друга, він з’явиться тут, щоб нічого не загубилося.',
   },
 
   find: {

@@ -27,6 +27,9 @@ export type Wish = {
   reservation: Reservation;
 };
 
+// A wish the viewer has reserved, with the person it is for.
+export type ReservedWish = { wish: Wish; owner: User };
+
 export type WishInput = {
   title: string;
   note: string | null;
@@ -104,6 +107,7 @@ export type Api = {
   listWishesOf: (userId: string) => Promise<Wish[]>;
   follow: (userId: string) => Promise<void>;
   unfollow: (userId: string) => Promise<void>;
+  listMyReservations: () => Promise<ReservedWish[]>;
   reserve: (wishId: string) => Promise<void>;
   unreserve: (wishId: string) => Promise<void>;
 };

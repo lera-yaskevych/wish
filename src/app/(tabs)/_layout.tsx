@@ -9,6 +9,7 @@ const TabsLayout = () => (
     screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
     <Tabs.Screen name="index" />
     <Tabs.Screen name="friends" />
+    <Tabs.Screen name="reserved" />
   </Tabs>
 );
 

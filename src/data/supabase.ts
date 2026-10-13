@@ -338,6 +338,21 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
       check(error);
     },
 
+    // The reader's own reservations, each with its wish and the person the wish belongs to.
+    listMyReservations: async () => {
+      const me = await requireMe();
+      const { data, error } = await supabase
+        .from('reservations')
+        .select(`wish:wishes(*, owner:profiles!owner_id(${USER_COLUMNS}))`)
+        .eq('reserver_id', me)
+        .order('created_at', { ascending: false });
+      check(error);
+      const rows = data as unknown as { wish: (WishRow & { owner: UserRow }) | null }[];
+      return rows.flatMap(({ wish }) =>
+        wish ? [{ wish: toWish({ ...wish, reservation: 'mine' }), owner: toUser(wish.owner) }] : [],
+      );
+    },
+
     reserve: async (wishId) => {
       const { error } = await supabase.from('reservations').insert({ wish_id: wishId });
       check(error, {

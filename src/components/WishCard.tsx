@@ -13,15 +13,18 @@ import { WishImage } from './WishImage';
 type Props = {
   wish: Wish;
   onPress: () => void;
-  // Present on a friend's list: the card then carries the reserve controls.
+  // Present on a friend's list: the card then shows who has it and offers to reserve.
   onReserve?: () => void;
+  // Alone, without onReserve, this is the overview of your reservations: every card
+  // there is yours, so it reads like a plain wish with a way to release it.
   onUnreserve?: () => void;
 };
 
 export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
   const t = useT();
-  const friendView = !!onReserve;
-  const mine = wish.reservation === 'mine';
+  const overview = !onReserve && !!onUnreserve;
+  const friendView = !!onReserve || overview;
+  const mine = wish.reservation === 'mine' && !overview;
   const taken = wish.reservation === 'taken';
   const note = isNoteOnly(wish);
   const domain = wish.url ? domainOf(wish.url) : null;
@@ -51,7 +54,7 @@ export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
     </Text>
   ) : null;
 
-  const control = !friendView ? null : mine ? (
+  const control = !friendView ? null : mine || overview ? (
     <Pressable accessibilityRole="button" accessibilityLabel={t.card.undoReservation} onPress={onUnreserve} hitSlop={10}>
       <Text style={styles.undo}>{t.card.undo}</Text>
     </Pressable>

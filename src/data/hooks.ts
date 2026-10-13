@@ -20,6 +20,9 @@ export const useProfile = (userId: string | undefined) =>
 export const useWishesOf = (userId: string) =>
   useQuery({ queryKey: ['wishes', 'of', userId], queryFn: () => api.listWishesOf(userId) });
 
+export const useMyReservations = () =>
+  useQuery({ queryKey: ['reservations', 'mine'], queryFn: api.listMyReservations });
+
 export const usePeopleSearch = (query: string) =>
   useQuery({
     queryKey: ['search', query],

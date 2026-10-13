@@ -1,14 +1,15 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Gift, Users, type LucideIcon } from 'lucide-react-native';
+import { Bookmark, Gift, Users, type LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '@/i18n';
 import { colors, fonts } from '@/theme';
 
-const tabs: Record<string, { key: 'myList' | 'friends'; icon: LucideIcon }> = {
+const tabs: Record<string, { key: 'myList' | 'friends' | 'reserved'; icon: LucideIcon }> = {
   index: { key: 'myList', icon: Gift },
   friends: { key: 'friends', icon: Users },
+  reserved: { key: 'reserved', icon: Bookmark },
 };
 
 export const TabBar = ({ state, navigation }: BottomTabBarProps) => {
@@ -47,8 +48,7 @@ export const TabBar = ({ state, navigation }: BottomTabBarProps) => {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 56,
+    justifyContent: 'space-evenly',
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: colors.line,

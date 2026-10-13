@@ -304,6 +304,18 @@ export const localApi: Api = {
     await saveDb(db);
   },
 
+  listMyReservations: async () => {
+    const db = await loadDb();
+    const viewer = await requireViewer(db);
+    return db.wishes
+      .filter((w) => w.reservedBy === viewer.id && !w.fulfilledAt)
+      .sort(byNewest)
+      .flatMap((w) => {
+        const owner = db.users.find((u) => u.id === w.ownerId);
+        return owner ? [{ wish: toWish(w, viewer.id), owner: toUser(owner) }] : [];
+      });
+  },
+
   reserve: async (wishId) => {
     const db = await loadDb();
     const viewer = await requireViewer(db);
