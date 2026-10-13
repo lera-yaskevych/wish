@@ -5,8 +5,7 @@ list, follows the people they buy gifts for, and can quietly reserve a wish so
 nobody buys the same thing twice. It runs in the phone's browser and can be added
 to the home screen like an app. English, Ukrainian and Turkish.
 
-**Live at <https://wish-omega-coral.vercel.app>.** Signing up needs an invite code;
-message me for one.
+**Live at <https://wish-omega-coral.vercel.app>.** Signing up needs an invite code. Write me an email at valerie.yaskevych@gmail.com if you would like to get the code to join.
 
 ## What it does
 
