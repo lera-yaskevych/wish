@@ -33,7 +33,7 @@ const errors: Record<ApiErrorCode | 'unknown', string> = {
   invalid_invite: 'That invite code isn’t right. Ask whoever invited you.',
   confirm_email: 'Check your email and confirm your address, then log in.',
   email_required: 'Type your email above first.',
-  reset_unavailable: 'Password reset by email arrives once accounts move online.',
+  reset_unavailable: 'Password reset isn’t available on demo data.',
   unknown: 'Something went wrong. Please try again.',
 };
 
@@ -180,8 +180,8 @@ export const en = {
     copied: 'Copied',
     shareMessage: (username: string, link: string | null) =>
       link
-        ? `I keep my wishlist in the Wishlist app. Join with this link and find me as @${username}: ${link}`
-        : `I keep my wishlist in the Wishlist app. Find me there as @${username}.`,
+        ? `I keep my wishlist in the Wish app. Join with this link and find me as @${username}: ${link}`
+        : `I keep my wishlist in the Wish app. Find me there as @${username}.`,
   },
 
   profile: {

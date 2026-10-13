@@ -24,7 +24,7 @@ export const AuthScreen = ({ children, footer }: Props) => {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 56, paddingBottom: insets.bottom + 28 }]}>
         <View>
           <View style={styles.top}>
-            <Text style={styles.logo}>wishlist.</Text>
+            <Text style={styles.logo}>wish.</Text>
             <View style={styles.languages}>
               {others.map(({ code, label }) => (
                 <Pressable

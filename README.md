@@ -1,9 +1,12 @@
-# Wishlist
+# Wish
 
 A small web app for family and friends to keep wishlists. Everyone has their own
 list, follows the people they buy gifts for, and can quietly reserve a wish so
 nobody buys the same thing twice. It runs in the phone's browser and can be added
 to the home screen like an app. English, Ukrainian and Turkish.
+
+**Live at <https://wish-omega-coral.vercel.app>.** Signing up needs an invite code;
+message me for one.
 
 ## What it does
 
@@ -11,7 +14,8 @@ to the home screen like an app. English, Ukrainian and Turkish.
   link and a price. Edit or delete it later.
 - **Archive.** When you receive something, mark it "I got this" and it moves to
   the archive. You can put it back on the list from there.
-- **Friends.** Find people by name or username and follow them to see their lists.
+- **Friends.** Find people by name or username and follow them to keep their
+  lists one tap away.
 - **Reserving.** On a friend's list, reserve a wish you plan to give. Other friends
   see that it is taken, but not by whom. The owner of the list sees nothing, so the
   surprise is kept.
@@ -30,6 +34,8 @@ to the home screen like an app. English, Ukrainian and Turkish.
 5. Open a friend's list and tap **Reserve** on what you will give. **Undo** releases it.
 6. Tap your initial at the top of **My list** to change your name, username,
    birthday or language, or to log out.
+7. To invite someone, tap **Share** in **Friends → Find people**. It sends a link
+   that opens sign-up with the invite code already filled in.
 
 To keep it on your phone, open it in the browser and choose **Add to Home Screen**
 (Share menu in Safari, the ⋮ menu in Chrome).
@@ -39,6 +45,7 @@ To keep it on your phone, open it in the browser and choose **Add to Home Screen
 The app is written with Expo (React Native for Web) and TypeScript. Accounts,
 wishes and photos are stored in [Supabase](https://supabase.com). The tables, and
 the rules for who may see what, are in [`supabase/migrations`](supabase/migrations).
+It is hosted on [Vercel](https://vercel.com), which redeploys on every push to `main`.
 
 Three rules are enforced by the database itself:
 
@@ -60,7 +67,8 @@ npx expo start --web
 Then open <http://localhost:8081>.
 
 To connect a Supabase project, copy `.env.example` to `.env.local` and fill in its
-two values. Without them the app runs on demo data kept in the browser.
+two values. Without them the app runs on demo data kept in the browser; the demo
+login and invite code are in [`src/data/seed.ts`](src/data/seed.ts).
 
 | Command | What it does |
 | --- | --- |
@@ -75,6 +83,7 @@ two values. Without them the app runs on demo data kept in the browser.
 | `src/components/` | Shared pieces: buttons, fields, wish cards, sheets. |
 | `src/data/` | Accounts and wishes. Screens only talk to `api` in `index.ts`, which uses `supabase.ts` or, when no backend is configured, `local.ts`. |
 | `src/i18n/` | All on-screen text, one file per language. |
+| `src/lib/` | Small helpers: usernames, links, photos, sharing. |
 | `src/theme.ts` | Colours, fonts and text styles. |
 | `supabase/` | Database tables, access rules and their test. |
 | `public/` | Web app manifest, home-screen icons and the HTML shell. |

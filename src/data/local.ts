@@ -6,8 +6,8 @@ import { DEMO_INVITE_CODE, seedUsers } from './seed';
 import { ApiError, type Api, type Profile, type User, type Wish } from './types';
 import { checkPassword, cleanProfile, cleanSignUp, cleanWish } from './validate';
 
-// On-device implementation of the Api. Everything lives in AsyncStorage on this
-// phone only, so accounts and lists are not shared between devices yet.
+// On-device implementation of the Api, used when no backend is configured.
+// Everything lives in AsyncStorage on this device only; nothing is shared.
 
 const DB_KEY = 'wishlist.db.v1';
 const SESSION_KEY = 'wishlist.session';

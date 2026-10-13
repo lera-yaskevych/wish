@@ -1,6 +1,6 @@
 {
-  "name": "Wishlist",
-  "short_name": "Wishlist",
+  "name": "Wish",
+  "short_name": "Wish",
   "description": "Keep your wishes in one place and see what the people you follow are hoping for.",
   "start_url": "/",
   "scope": "/",

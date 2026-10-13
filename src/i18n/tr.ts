@@ -35,7 +35,7 @@ const errors: Record<ApiErrorCode | 'unknown', string> = {
   invalid_invite: 'Davet kodu doğru değil. Seni davet eden kişiye sor.',
   confirm_email: 'E-postanı kontrol edip adresini onayla, sonra giriş yap.',
   email_required: 'Önce yukarıya e-postanı yaz.',
-  reset_unavailable: 'E-postayla şifre sıfırlama, hesaplar çevrimiçi olduğunda gelecek.',
+  reset_unavailable: 'Demo verilerde şifre sıfırlama kullanılamaz.',
   unknown: 'Bir şeyler ters gitti. Lütfen tekrar dene.',
 };
 
@@ -184,8 +184,8 @@ export const tr: Dictionary = {
     copied: 'Kopyalandı',
     shareMessage: (username, link) =>
       link
-        ? `Dilek listemi Wishlist uygulamasında tutuyorum. Bu bağlantıyla katıl ve beni @${username} olarak bul: ${link}`
-        : `Dilek listemi Wishlist uygulamasında tutuyorum. Beni orada @${username} olarak bulabilirsin.`,
+        ? `Dilek listemi Wish uygulamasında tutuyorum. Bu bağlantıyla katıl ve beni @${username} olarak bul: ${link}`
+        : `Dilek listemi Wish uygulamasında tutuyorum. Beni orada @${username} olarak bulabilirsin.`,
   },
 
   profile: {

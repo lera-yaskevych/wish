@@ -1,5 +1,5 @@
-// Demo content for the on-device store, so every screen has something to show
-// before a real backend exists. Log in with DEMO_LOGIN to see the designed state.
+// Demo content for the on-device store, used when no backend is configured.
+// Log in with DEMO_LOGIN to see every screen filled in.
 
 export const DEMO_LOGIN = { email: 'valeria@email.com', password: 'wishlist-demo' };
 
