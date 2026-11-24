@@ -16,7 +16,7 @@ type StoredUser = User & { email: string; salt: string; passwordHash: string };
 // A wish is reserved by a member (reservedBy, their id) or by a guest from a shared link
 // (guestName, with the hash of the key their device keeps). The guest fields are optional
 // so demo data saved before they existed still loads.
-type StoredWish = Omit<Wish, 'reservation' | 'reservedBy'> & {
+type StoredWish = Omit<Wish, 'reservation' | 'reservedBy' | 'reservedByGuest'> & {
   reservedBy: string | null;
   guestName?: string | null;
   guestKeyHash?: string | null;
@@ -104,6 +104,7 @@ const toWish = (db: Db, { reservedBy, guestName, guestKeyHash, ...wish }: Stored
     ...wish,
     reservation: !reserved ? 'none' : mine ? 'mine' : 'taken',
     reservedBy: !reserved || mine || wish.ownerId === viewerId ? null : name,
+    reservedByGuest: !reservedBy && !!guestName,
   };
 };
 
@@ -117,6 +118,7 @@ const toGuestWish = ({ reservedBy, guestName, guestKeyHash, ...wish }: StoredWis
         ? 'mine'
         : 'taken',
   reservedBy: null,
+  reservedByGuest: false,
 });
 
 const ownerOfToken = (db: Db, token: string) => db.users.find((u) => shareTokenOf(u.id) === token);
@@ -409,6 +411,15 @@ export const localApi: Api = {
     if (isReserved(wish)) throw new ApiError('already_reserved');
     wish.guestName = name;
     wish.guestKeyHash = keyHash;
+    await saveDb(db);
+  },
+
+  releaseGuestReservation: async (wishId) => {
+    const db = await loadDb();
+    const viewer = await requireViewer(db);
+    const wish = requireOwnWish(db, viewer, wishId);
+    if (wish.reservedBy || !wish.guestName) return;
+    releaseReservation(wish);
     await saveDb(db);
   },
 

@@ -70,3 +70,4 @@ export const useReserve = () => useWrite(api.reserve);
 export const useUnreserve = () => useWrite(api.unreserve);
 export const useReserveAsGuest = () => useWrite(api.reserveAsGuest);
 export const useUnreserveAsGuest = () => useWrite(api.unreserveAsGuest);
+export const useReleaseGuestReservation = () => useWrite(api.releaseGuestReservation);

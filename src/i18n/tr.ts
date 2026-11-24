@@ -121,6 +121,12 @@ export const tr: Dictionary = {
       `${firstName(name)} yalnızca ayırtıldığını görecek, kimin ayırttığını değil. Diğer arkadaşlar adını görecek.`,
     secretNoteShort: (name) => `${firstName(name)} yalnızca ayırtıldığını görecek, kimin ayırttığını değil.`,
     reservedForYou: 'Biri bunu senin için ayırttı',
+    fromSharedLink: 'Paylaştığın bağlantıdan, hesabı olmayan biri.',
+    removeReservation: 'Kaldır',
+    removeReservationTitle: 'Bu ayırtma kaldırılsın mı?',
+    removeReservationBody:
+      'Bunu hesabı olmayan biri paylaşılan bir bağlantıdan ayırttı. Kaldırırsan dilek yeniden ayırtılabilir. Ayırtan kişiye haber verilmez.',
+    removeReservationConfirm: 'Ayırtmayı kaldır',
     deleteTitle: 'Bu dilek silinsin mi?',
     deleteBody: (title) => `“${title}” kalıcı olarak silinecek.`,
     deleteHint: 'Hediyeyi aldıysan bunun yerine gerçekleşti olarak işaretle; arşivinde saklanır.',

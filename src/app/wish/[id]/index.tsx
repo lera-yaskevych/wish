@@ -12,6 +12,7 @@ import {
   useDeleteWish,
   useFulfillWish,
   useProfile,
+  useReleaseGuestReservation,
   useReserve,
   useRestoreWish,
   useUnreserve,
@@ -31,12 +32,14 @@ const WishDetail = () => {
   const { data: wish, isPending } = useWish(id);
   const { data: owner } = useProfile(wish && wish.ownerId !== me.id ? wish.ownerId : undefined);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingRelease, setConfirmingRelease] = useState(false);
 
   const fulfill = useFulfillWish();
   const restore = useRestoreWish();
   const remove = useDeleteWish();
   const reserve = useReserve();
   const unreserve = useUnreserve();
+  const release = useReleaseGuestReservation();
 
   // Where the back button leads when this screen was opened directly and has nothing
   // beneath it: a friend's wish belongs with their list, your own with yours.
@@ -70,6 +73,11 @@ const WishDetail = () => {
     setConfirmingDelete(false);
     await fulfill.mutateAsync(wish.id);
     goBack();
+  };
+
+  const releaseGuest = async () => {
+    await release.mutateAsync(wish.id);
+    setConfirmingRelease(false);
   };
 
   const deleteWish = async () => {
@@ -135,9 +143,24 @@ const WishDetail = () => {
             </View>
           )}
           {own && wish.reservation === 'taken' && (
-            <View style={styles.fulfilled}>
-              <Bookmark size={15} color={colors.accent} strokeWidth={2.2} />
-              <Text style={styles.reservedForYou}>{t.wish.reservedForYou}</Text>
+            <View style={styles.reservedNotice}>
+              <View style={styles.inline}>
+                <Bookmark size={15} color={colors.accent} strokeWidth={2.2} />
+                <Text style={styles.reservedForYou}>{t.wish.reservedForYou}</Text>
+              </View>
+              {/* Someone on a shared link could reserve everything, so the owner may undo a guest's. */}
+              {wish.reservedByGuest && (
+                <View style={styles.inline}>
+                  <Text style={[type.small, styles.guestNote]}>{t.wish.fromSharedLink}</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t.wish.removeReservationConfirm}
+                    hitSlop={10}
+                    onPress={() => setConfirmingRelease(true)}>
+                    <Text style={styles.releaseLabel}>{t.wish.removeReservation}</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
           )}
           <Text style={isNoteOnly(wish) ? styles.noteTitle : type.title}>
@@ -182,6 +205,22 @@ const WishDetail = () => {
         </Pressable>
       )}
 
+      <Sheet visible={confirmingRelease} onClose={() => setConfirmingRelease(false)}>
+        <Text style={styles.sheetTitle}>{t.wish.removeReservationTitle}</Text>
+        <Text style={[type.body, styles.sheetBody]}>{t.wish.removeReservationBody}</Text>
+        <View style={styles.sheetActions}>
+          <Button
+            label={t.wish.removeReservationConfirm}
+            variant="danger"
+            loading={release.isPending}
+            onPress={releaseGuest}
+          />
+        </View>
+        <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setConfirmingRelease(false)} style={styles.cancel}>
+          <Text style={styles.cancelLabel}>{t.common.cancel}</Text>
+        </Pressable>
+      </Sheet>
+
       <Sheet visible={confirmingDelete} onClose={() => setConfirmingDelete(false)}>
         <Text style={styles.sheetTitle}>{t.wish.deleteTitle}</Text>
         <Text style={[type.body, styles.sheetBody]}>
@@ -212,7 +251,11 @@ const styles = StyleSheet.create({
   eyebrow: { marginBottom: 8 },
   fulfilled: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
   fulfilledLabel: { ...fonts.medium, fontSize: 14.5, color: colors.green },
+  reservedNotice: { gap: 4, marginBottom: 10 },
+  inline: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   reservedForYou: { ...fonts.medium, fontSize: 14.5, color: colors.accent },
+  guestNote: { flexShrink: 1 },
+  releaseLabel: { ...fonts.medium, fontSize: 13.5, color: colors.accent, textDecorationLine: 'underline' },
   noteTitle: { ...fonts.serifItalic, fontSize: 32, lineHeight: 38, color: colors.ink },
   price: { ...fonts.bold, fontSize: 20, color: colors.ink, marginTop: 8 },
   note: { marginTop: 18 },

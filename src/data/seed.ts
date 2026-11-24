@@ -48,7 +48,7 @@ export const seedUsers: SeedUser[] = [
       { title: 'Linen bedding, oat', note: 'Double size · any neutral', imageUri: 'demo:sage' },
       { title: 'Hiking poles', url: 'https://outdoor-shop.com/hiking-poles', price: '€75', reservedBy: 'u-marta' },
       { title: 'A day trip somewhere by the sea — just the two of us.' },
-      { title: 'Any book by Ursula K. Le Guin', note: 'Paperback is perfect' },
+      { title: 'Any book by Ursula K. Le Guin', note: 'Paperback is perfect', reservedByGuest: 'Grandma Olha' },
       { title: 'Enamel teapot', imageUri: 'demo:sand', fulfilledAt: '2026-10-03T10:00:00.000Z' },
       { title: 'Cooking class for two', fulfilledAt: '2026-08-14T10:00:00.000Z' },
       { title: 'Wool throw blanket', imageUri: 'demo:sage', fulfilledAt: '2025-12-26T10:00:00.000Z' },

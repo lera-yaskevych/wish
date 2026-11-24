@@ -208,7 +208,7 @@ await test('the owner cannot probe by trying to reserve their own wish', async (
   assert.equal(error?.code, '42501');
 });
 
-await test('another friend cannot see who reserved, nor reserve twice, nor undo it', async () => {
+await test('another friend cannot read the reservation rows, nor reserve twice, nor undo it', async () => {
   assert.deepEqual((await bohdan.supabase.from('reservations').select()).data, []);
   const second = await bohdan.supabase.from('reservations').insert({ wish_id: wish.id });
   assert.equal(second.error?.code, '23505');
@@ -302,6 +302,31 @@ await test('only the guest’s own key undoes their reservation', async () => {
   assert.equal((await sharedWish(token, wish.id, guestKey)).reservation, 'mine');
   assert.equal((await anon.rpc('unreserve_as_guest', { p_wish: wish.id, p_guest_key: guestKey })).error, null);
   assert.equal((await sharedWish(token, wish.id)).reservation, 'none');
+});
+
+await test('only the owner can remove a guest’s reservation, and never a member’s', async () => {
+  const anon = client();
+  const guestReserve = () =>
+    anon.rpc('reserve_as_guest', { p_token: token, p_wish: wish.id, p_guest_key: guestKey, p_name: 'Aunt Iryna' });
+  const isGuestReservation = async (supabase) => (await visibleWish(supabase, owner.id, wish.id)).guest_reservation;
+
+  assert.equal((await guestReserve()).error, null);
+  assert.equal(await isGuestReservation(owner.supabase), true);
+  assert.equal((await sharedWish(token, wish.id, guestKey)).guest_reservation, false, 'guests are told nothing extra');
+
+  assert.ok((await anon.rpc('release_guest_reservation', { p_wish: wish.id })).error);
+  await bohdan.supabase.rpc('release_guest_reservation', { p_wish: wish.id });
+  assert.equal((await sharedWish(token, wish.id, guestKey)).reservation, 'mine', 'a friend cannot remove it');
+
+  assert.equal((await owner.supabase.rpc('release_guest_reservation', { p_wish: wish.id })).error, null);
+  assert.equal((await sharedWish(token, wish.id, guestKey)).reservation, 'none');
+  assert.equal(await reservationOf(owner.supabase, owner.id, wish.id), 'none');
+
+  assert.equal((await anna.supabase.from('reservations').insert({ wish_id: wish.id })).error, null);
+  assert.equal(await isGuestReservation(owner.supabase), false);
+  await owner.supabase.rpc('release_guest_reservation', { p_wish: wish.id });
+  assert.equal(await reservationOf(anna.supabase, owner.id, wish.id), 'mine', 'a member’s reservation stays');
+  await anna.supabase.from('reservations').delete().eq('wish_id', wish.id);
 });
 
 await test('received wishes drop off the shared list and cannot be reserved by guests', async () => {

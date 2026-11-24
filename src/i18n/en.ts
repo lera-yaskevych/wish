@@ -118,6 +118,12 @@ export const en = {
       `${firstName(name)} will see it’s reserved, but not by whom. Other friends will see your name.`,
     secretNoteShort: (name: string) => `${firstName(name)} will only see it’s reserved, not by whom.`,
     reservedForYou: 'Someone has reserved this for you',
+    fromSharedLink: 'From your shared link, by someone without an account.',
+    removeReservation: 'Remove',
+    removeReservationTitle: 'Remove this reservation?',
+    removeReservationBody:
+      'Someone reserved this from a shared link without an account. If you remove it, the wish can be reserved again. They won’t be told.',
+    removeReservationConfirm: 'Remove reservation',
     deleteTitle: 'Delete this wish?',
     deleteBody: (title: string) => `“${title}” will be removed for good.`,
     deleteHint: 'If you received it, mark it as fulfilled instead — it’ll be kept in your archive.',

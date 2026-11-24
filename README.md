@@ -23,6 +23,8 @@ to the home screen like an app. English, Ukrainian and Turkish.
   link. Anyone with the link can see the list without an account and reserve a
   wish by leaving a nickname. Friends in the app see that nickname. People on the
   link see only that a wish is taken, and can undo their own from the same browser.
+  If someone on a link reserves something they won't give, the list's owner can
+  remove that reservation from the wish. Friends' reservations stay theirs to undo.
 - **Invite only.** Creating an account needs an invite code, so lists are seen only
   by people who were invited.
 - **Notifications.** Turn them on in your profile to hear when someone you follow
@@ -80,7 +82,8 @@ Then open <http://localhost:8081>.
 
 To connect a Supabase project, copy `.env.example` to `.env.local` and fill in its
 two values. Without them the app runs on demo data kept in the browser; the demo
-login and invite code are in [`src/data/seed.ts`](src/data/seed.ts).
+login and invite code are in [`src/data/seed.ts`](src/data/seed.ts). To try the demo
+while `.env.local` is filled in, start with `EXPO_PUBLIC_DEMO=1 npx expo start --web`.
 
 | Command | What it does |
 | --- | --- |

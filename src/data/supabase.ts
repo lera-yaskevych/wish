@@ -28,6 +28,7 @@ type WishRow = {
   fulfilled_at: string | null;
   reservation?: Wish['reservation'];
   reserved_by?: string | null;
+  guest_reservation?: boolean;
 };
 
 type Failure = { code?: string; message: string } | null;
@@ -54,6 +55,7 @@ const toWish = (row: WishRow): Wish => ({
   fulfilledAt: row.fulfilled_at,
   reservation: row.reservation ?? 'none',
   reservedBy: row.reserved_by ?? null,
+  reservedByGuest: row.guest_reservation ?? false,
 });
 
 // Known failures become codes the screens can word; anything else surfaces as "something went wrong".
@@ -405,6 +407,12 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
 
     unreserveAsGuest: async ({ wishId, guestKey }) => {
       const { error } = await supabase.rpc('unreserve_as_guest', { p_wish: wishId, p_guest_key: guestKey });
+      check(error);
+    },
+
+    releaseGuestReservation: async (wishId) => {
+      await requireMe();
+      const { error } = await supabase.rpc('release_guest_reservation', { p_wish: wishId });
       check(error);
     },
   };

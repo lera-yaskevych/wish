@@ -29,6 +29,9 @@ export type Wish = {
   // Who reserved a 'taken' wish: a member's name or a guest's nickname. Only other members
   // are told; for the owner and for guests on a shared link it stays null.
   reservedBy: string | null;
+  // A guest on a shared link made the reservation. Told to members so the owner can
+  // remove one; always false for guests.
+  reservedByGuest: boolean;
 };
 
 // A wish the viewer has reserved, with the person it is for.
@@ -126,4 +129,6 @@ export type Api = {
   getSharedList: (token: string, guestKey: string | null) => Promise<SharedList | null>;
   reserveAsGuest: (input: { token: string; wishId: string; guestKey: string; nickname: string }) => Promise<void>;
   unreserveAsGuest: (input: { wishId: string; guestKey: string }) => Promise<void>;
+  // For the owner of a wish: frees it from a guest's reservation. Members' stay theirs.
+  releaseGuestReservation: (wishId: string) => Promise<void>;
 };

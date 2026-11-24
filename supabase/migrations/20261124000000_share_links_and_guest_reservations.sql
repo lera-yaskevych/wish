@@ -7,6 +7,10 @@
 --   other members             who reserved it: a member's name or a guest's nickname
 --   guests on a shared link   that it is reserved, or that it is theirs. Never by whom,
 --                             or the owner could open their own link signed out and see.
+--
+-- The owner may remove a reservation a guest made (someone on a link could reserve
+-- everything), so they are also told whether a reservation came from a guest. Members'
+-- reservations stay theirs alone to undo.
 
 -- ---------------------------------------------------------------------------
 -- Share links
@@ -76,9 +80,10 @@ $$;
 -- Reading wishes with who reserved them
 -- ---------------------------------------------------------------------------
 
--- Same as before, with two changes: the owner now gets 'taken' once a wish is reserved,
--- and `reserved_by` names whoever reserved it, for everyone except the owner and the
--- reserver (whose wishes say 'mine').
+-- Same as before, with three changes: the owner now gets 'taken' once a wish is
+-- reserved; `reserved_by` names whoever reserved it, for everyone except the owner and
+-- the reserver (whose wishes say 'mine'); and `guest_reservation` says whether a guest
+-- made it, so the owner knows which ones they may remove.
 drop function public.wishes_visible(uuid, uuid);
 
 create function public.wishes_visible(p_owner uuid default null, p_wish uuid default null)
@@ -93,7 +98,8 @@ returns table (
   created_at timestamptz,
   fulfilled_at timestamptz,
   reservation text,
-  reserved_by text
+  reserved_by text,
+  guest_reservation boolean
 )
 language sql
 stable
@@ -110,7 +116,8 @@ as $$
     case
       when w.owner_id = auth.uid() or r.reserver_id = auth.uid() then null
       else coalesce(p.name, r.guest_name)
-    end
+    end,
+    r.wish_id is not null and r.reserver_id is null
   from public.wishes w
   left join public.reservations r on r.wish_id = w.id
   left join public.profiles p on p.id = r.reserver_id
@@ -141,8 +148,8 @@ as $$
 $$;
 
 -- The current wishes behind a link as a guest sees them. The guest's device key marks
--- their own reservations as 'mine'. `reserved_by` is always empty; it is there so the
--- rows have the same shape as wishes_visible.
+-- their own reservations as 'mine'. `reserved_by` and `guest_reservation` are always
+-- empty; they are there so the rows have the same shape as wishes_visible.
 create function public.shared_wishes(p_token text, p_guest_key text default null)
 returns table (
   id uuid,
@@ -155,7 +162,8 @@ returns table (
   created_at timestamptz,
   fulfilled_at timestamptz,
   reservation text,
-  reserved_by text
+  reserved_by text,
+  guest_reservation boolean
 )
 language sql
 stable
@@ -169,7 +177,8 @@ as $$
       when r.guest_key_hash = public.guest_key_hash(p_guest_key) then 'mine'
       else 'taken'
     end,
-    null::text
+    null::text,
+    false
   from public.share_links l
   join public.wishes w on w.owner_id = l.user_id
   left join public.reservations r on r.wish_id = w.id
@@ -228,6 +237,22 @@ as $$
     and r.guest_key_hash = public.guest_key_hash(p_guest_key);
 $$;
 
+-- The owner of a wish can free it from a guest's reservation. Nobody else can, and
+-- a member's reservation is never touched. Asking about any other wish does nothing.
+create function public.release_guest_reservation(p_wish uuid)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  delete from public.reservations r
+  using public.wishes w
+  where r.wish_id = p_wish
+    and w.id = r.wish_id
+    and w.owner_id = auth.uid()
+    and r.reserver_id is null;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Who may call what
 -- ---------------------------------------------------------------------------
@@ -241,6 +266,9 @@ grant execute on function public.share_token(uuid) to authenticated, service_rol
 
 revoke all on function public.wishes_visible(uuid, uuid) from public, anon;
 grant execute on function public.wishes_visible(uuid, uuid) to authenticated, service_role;
+
+revoke all on function public.release_guest_reservation(uuid) from public, anon;
+grant execute on function public.release_guest_reservation(uuid) to authenticated, service_role;
 
 -- A shared link works without an account.
 revoke all on function public.shared_owner(text) from public;
