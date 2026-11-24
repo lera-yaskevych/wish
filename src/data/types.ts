@@ -32,6 +32,9 @@ export type Wish = {
   // A guest on a shared link made the reservation. Told to members so the owner can
   // remove one; always false for guests.
   reservedByGuest: boolean;
+  // Whoever reserved it has marked it as given, and the owner has not yet said whether it
+  // arrived. Told only to the owner, who is asked to confirm, and to that person.
+  given: boolean;
 };
 
 // A wish the viewer has reserved, with the person it is for.
@@ -121,6 +124,12 @@ export type Api = {
   listMyReservations: () => Promise<ReservedWish[]>;
   reserve: (wishId: string) => Promise<void>;
   unreserve: (wishId: string) => Promise<void>;
+  // For whoever reserved a wish: says it has been given, which asks its owner whether it
+  // arrived. `given: false` takes that back.
+  markGiven: (wishId: string, given: boolean) => Promise<void>;
+  // For the owner, answering "I haven't got it": the reservation stays as it was. "I got
+  // it" is fulfillWish, the same as marking any wish as received.
+  dismissGiven: (wishId: string) => Promise<void>;
 
   // The secret part of the link to someone's list, yours included. Null if they are gone.
   getShareToken: (userId: string) => Promise<string | null>;

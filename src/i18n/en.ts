@@ -99,6 +99,24 @@ export const en = {
     reservedBy: (name: string) => `Reserved by ${name}`,
     undo: 'Undo',
     undoReservation: 'Undo reservation',
+    givenByYou: 'Given by you',
+    markedGiven: 'Marked as given',
+  },
+
+  // Whoever reserved a gift marks it as given; its owner is asked whether it arrived.
+  given: {
+    mark: 'Mark as given',
+    confirmTitle: 'Already given?',
+    confirmBody: (name: string) =>
+      `${firstName(name)} will be asked whether it arrived, but still won’t see who it was from.`,
+    confirm: 'Yes, I’ve given it',
+    waiting: (name: string) => `Waiting for ${firstName(name)} to confirm it arrived.`,
+    undo: 'I haven’t given it yet',
+    notice: 'Someone says they’ve given you this',
+    question: 'Did you get it?',
+    someoneGave: (title: string) => `Someone says they’ve given you “${title}”.`,
+    yes: 'Yes, I got it',
+    no: 'No, not yet',
   },
 
   wish: {
@@ -235,7 +253,7 @@ export const en = {
     birthdayError: 'That birthday doesn’t look right — use a day and a month, like 2 and 11.',
     language: 'Language',
     notifications: 'Notifications',
-    notifyNewWishes: 'When someone you follow adds a wish',
+    notifyNewWishes: 'When someone you follow adds a wish, or someone gives you a gift',
     turnOn: 'Turn on',
     turnedOn: 'On',
     notifyInstallHint: 'On iPhone, add Wish to your Home Screen first, then turn this on from there.',

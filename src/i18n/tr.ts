@@ -102,6 +102,23 @@ export const tr: Dictionary = {
     reservedBy: (name) => `Ayırtan: ${name}`,
     undo: 'Vazgeç',
     undoReservation: 'Ayırtmaktan vazgeç',
+    givenByYou: 'Sen hediye ettin',
+    markedGiven: 'Hediye edildi',
+  },
+
+  given: {
+    mark: 'Hediye edildi olarak işaretle',
+    confirmTitle: 'Hediyeyi verdin mi?',
+    confirmBody: (name) =>
+      `${firstName(name)} hediyenin ulaşıp ulaşmadığını onaylayacak, ama kimden geldiğini yine de görmeyecek.`,
+    confirm: 'Evet, verdim',
+    waiting: (name) => `Onay bekleniyor: ${firstName(name)}`,
+    undo: 'Henüz vermedim',
+    notice: 'Biri bunu sana hediye ettiğini söylüyor',
+    question: 'Hediyeni aldın mı?',
+    someoneGave: (title) => `Biri “${title}” dileğini gerçekleştirdiğini söylüyor.`,
+    yes: 'Evet, aldım',
+    no: 'Hayır, henüz değil',
   },
 
   wish: {
@@ -235,7 +252,7 @@ export const tr: Dictionary = {
     birthdayError: 'Bu doğum günü doğru görünmüyor — gün ve ay yaz, örneğin 2 ve 11.',
     language: 'Dil',
     notifications: 'Bildirimler',
-    notifyNewWishes: 'Takip ettiğin biri dilek eklediğinde',
+    notifyNewWishes: 'Takip ettiğin biri dilek eklediğinde ya da biri sana hediye verdiğinde',
     turnOn: 'Aç',
     turnedOn: 'Açık',
     notifyInstallHint: 'iPhone’da önce Wish’i Ana Ekrana ekle, sonra bildirimleri oradan aç.',

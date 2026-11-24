@@ -29,6 +29,7 @@ type WishRow = {
   reservation?: Wish['reservation'];
   reserved_by?: string | null;
   guest_reservation?: boolean;
+  given?: boolean;
 };
 
 type Failure = { code?: string; message: string } | null;
@@ -56,6 +57,7 @@ const toWish = (row: WishRow): Wish => ({
   reservation: row.reservation ?? 'none',
   reservedBy: row.reserved_by ?? null,
   reservedByGuest: row.guest_reservation ?? false,
+  given: row.given ?? false,
 });
 
 // Known failures become codes the screens can word; anything else surfaces as "something went wrong".
@@ -348,13 +350,15 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
       const me = await requireMe();
       const { data, error } = await supabase
         .from('reservations')
-        .select(`wish:wishes(*, owner:profiles!owner_id(${USER_COLUMNS}))`)
+        .select(`given_at, wish:wishes(*, owner:profiles!owner_id(${USER_COLUMNS}))`)
         .eq('reserver_id', me)
         .order('created_at', { ascending: false });
       check(error);
-      const rows = data as unknown as { wish: (WishRow & { owner: UserRow }) | null }[];
-      return rows.flatMap(({ wish }) =>
-        wish ? [{ wish: toWish({ ...wish, reservation: 'mine' }), owner: toUser(wish.owner) }] : [],
+      const rows = data as unknown as { given_at: string | null; wish: (WishRow & { owner: UserRow }) | null }[];
+      return rows.flatMap(({ given_at, wish }) =>
+        wish
+          ? [{ wish: toWish({ ...wish, reservation: 'mine', given: !!given_at }), owner: toUser(wish.owner) }]
+          : [],
       );
     },
 
@@ -370,6 +374,19 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
     unreserve: async (wishId) => {
       const me = await requireMe();
       const { error } = await supabase.from('reservations').delete().eq('wish_id', wishId).eq('reserver_id', me);
+      check(error);
+    },
+
+    // The database notifies the owner's devices when a wish is first marked as given.
+    markGiven: async (wishId, given) => {
+      await requireMe();
+      const { error } = await supabase.rpc('mark_given', { p_wish: wishId, p_given: given });
+      check(error);
+    },
+
+    dismissGiven: async (wishId) => {
+      await requireMe();
+      const { error } = await supabase.rpc('dismiss_given', { p_wish: wishId });
       check(error);
     },
 

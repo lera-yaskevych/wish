@@ -111,6 +111,23 @@ export const uk: Dictionary = {
     reservedBy: (name) => `Заброньовано: ${name}`,
     undo: 'Скасувати',
     undoReservation: 'Скасувати бронювання',
+    givenByYou: 'Подаровано вами',
+    markedGiven: 'Вже подаровано',
+  },
+
+  given: {
+    mark: 'Позначити, що подаровано',
+    confirmTitle: 'Вже подарували?',
+    confirmBody: (name) =>
+      `${firstName(name)} отримає запитання, чи дійшов подарунок, але так і не дізнається, від кого він.`,
+    confirm: 'Так, уже подаровано',
+    waiting: (name) => `Чекаємо, поки ${firstName(name)} підтвердить, що подарунок дійшов.`,
+    undo: 'Ще не подаровано',
+    notice: 'Хтось каже, що вже подарував вам це',
+    question: 'Ви це отримали?',
+    someoneGave: (title) => `Хтось каже, що вже подарував вам «${title}».`,
+    yes: 'Так, отримано',
+    no: 'Ні, ще ні',
   },
 
   wish: {
@@ -248,7 +265,7 @@ export const uk: Dictionary = {
     birthdayError: 'Схоже, дата неправильна — вкажіть день і місяць, наприклад 2 і 11.',
     language: 'Мова',
     notifications: 'Сповіщення',
-    notifyNewWishes: 'Коли хтось із ваших друзів додає бажання',
+    notifyNewWishes: 'Коли хтось із ваших друзів додає бажання або вручає вам подарунок',
     turnOn: 'Увімкнути',
     turnedOn: 'Увімкнено',
     notifyInstallHint: 'На iPhone спершу додайте Wish на початковий екран, а потім увімкніть сповіщення там.',
