@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 import { newId } from '@/lib/ids';
 
 import { ApiError, type Api, type ApiErrorCode, type Profile, type User, type Wish } from './types';
-import { checkPassword, cleanEmail, cleanProfile, cleanSignUp, cleanWish } from './validate';
+import { checkPassword, cleanEmail, cleanNickname, cleanProfile, cleanSignUp, cleanWish } from './validate';
 
 // The real backend. Who may read or change what is decided by the database itself
 // (supabase/migrations); this file only asks, and translates the answers.
@@ -27,6 +27,7 @@ type WishRow = {
   created_at: string;
   fulfilled_at: string | null;
   reservation?: Wish['reservation'];
+  reserved_by?: string | null;
 };
 
 type Failure = { code?: string; message: string } | null;
@@ -52,6 +53,7 @@ const toWish = (row: WishRow): Wish => ({
   createdAt: row.created_at,
   fulfilledAt: row.fulfilled_at,
   reservation: row.reservation ?? 'none',
+  reservedBy: row.reserved_by ?? null,
 });
 
 // Known failures become codes the screens can word; anything else surfaces as "something went wrong".
@@ -82,6 +84,7 @@ const UNIQUE_VIOLATION = '23505';
 const CHECK_VIOLATION = '23514';
 const NOT_ALLOWED = '42501';
 const MISSING_REFERENCE = '23503';
+const INVALID_PARAMETER = '22023';
 
 export const createSupabaseApi = (url: string, publishableKey: string): Api => {
   const supabase = createClient(url, publishableKey, {
@@ -365,6 +368,43 @@ export const createSupabaseApi = (url: string, publishableKey: string): Api => {
     unreserve: async (wishId) => {
       const me = await requireMe();
       const { error } = await supabase.from('reservations').delete().eq('wish_id', wishId).eq('reserver_id', me);
+      check(error);
+    },
+
+    getShareToken: async (userId) => {
+      const { data, error } = await supabase.rpc('share_token', { p_user: userId });
+      check(error);
+      return (data as string | null) ?? null;
+    },
+
+    // Works signed out: the link itself is the permission.
+    getSharedList: async (token, guestKey) => {
+      const [owner, wishes] = await Promise.all([
+        supabase.rpc('shared_owner', { p_token: token }),
+        supabase.rpc('shared_wishes', { p_token: token, p_guest_key: guestKey }),
+      ]);
+      check(owner.error);
+      check(wishes.error);
+      const row = (owner.data as { id: string; name: string }[])[0];
+      return row ? { owner: { id: row.id, name: row.name }, wishes: (wishes.data as WishRow[]).map(toWish) } : null;
+    },
+
+    reserveAsGuest: async ({ token, wishId, guestKey, nickname }) => {
+      const { error } = await supabase.rpc('reserve_as_guest', {
+        p_token: token,
+        p_wish: wishId,
+        p_guest_key: guestKey,
+        p_name: cleanNickname(nickname),
+      });
+      check(error, {
+        [UNIQUE_VIOLATION]: 'already_reserved',
+        [NOT_ALLOWED]: 'cannot_reserve',
+        [INVALID_PARAMETER]: 'nickname_required',
+      });
+    },
+
+    unreserveAsGuest: async ({ wishId, guestKey }) => {
+      const { error } = await supabase.rpc('unreserve_as_guest', { p_wish: wishId, p_guest_key: guestKey });
       check(error);
     },
   };

@@ -16,8 +16,13 @@ to the home screen like an app. English, Ukrainian and Turkish.
 - **Friends.** Find people by name or username and follow them to keep their
   lists one tap away.
 - **Reserving.** On a friend's list, reserve a wish you plan to give. Other friends
-  see that it is taken, but not by whom. The owner of the list sees nothing, so the
-  surprise is kept. The Reserved tab lists everything you have promised to give.
+  see who reserved it, so you can team up. The owner of the list only sees that it
+  is reserved, never by whom, so the surprise is kept. The Reserved tab lists
+  everything you have promised to give.
+- **Sharing a list.** Tap **Share list** on your own list or a friend's to send a
+  link. Anyone with the link can see the list without an account and reserve a
+  wish by leaving a nickname. Friends in the app see that nickname. People on the
+  link see only that a wish is taken, and can undo their own from the same browser.
 - **Invite only.** Creating an account needs an invite code, so lists are seen only
   by people who were invited.
 - **Notifications.** Turn them on in your profile to hear when someone you follow
@@ -33,6 +38,7 @@ to the home screen like an app. English, Ukrainian and Turkish.
 3. Open a wish to edit it, mark it as received, or delete it.
 4. Go to **Friends → Find people**, search for someone and tap **Follow**.
 5. Open a friend's list and tap **Reserve** on what you will give. **Undo** releases it.
+   **Share list** at the top sends a link to that list to someone without an account.
 6. Tap your initial at the top of **My list** to change your name, username,
    birthday or language, or to log out.
 7. To invite someone, tap **Share** in **Friends → Find people**. It sends a link
@@ -50,11 +56,14 @@ It is hosted on [Vercel](https://vercel.com), which redeploys on every push to `
 Notifications are web push: the database calls the function in [`api/push.ts`](api/push.ts)
 whenever a wish is added.
 
-Three rules are enforced by the database itself:
+These rules are enforced by the database itself:
 
 - Only someone with the invite code can sign up.
-- A reservation is visible only to the person who made it. Other friends see that
-  the wish is taken; its owner sees nothing.
+- Who reserved a wish is shown only to other members. Its owner sees that it is
+  reserved, never by whom. People on a shared link see the same as the owner, so
+  the owner cannot find out by opening their own link signed out.
+- A shared link opens one person's current wishes and nothing else. It is a random
+  code, not the person's id, and a guest can reserve only from that list.
 - Once a wish is marked as received, friends no longer see it.
 
 ## Running it locally

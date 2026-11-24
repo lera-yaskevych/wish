@@ -11,7 +11,8 @@ export type Profile = User & {
   isFollowing: boolean;
 };
 
-// What the viewer may know about a wish's reservation. The owner always gets 'none'.
+// What the viewer may know about a wish's reservation: 'mine' when they made it, 'taken'
+// when someone else did. The owner sees 'taken' too, but never who it was.
 export type Reservation = 'none' | 'mine' | 'taken';
 
 export type Wish = {
@@ -25,10 +26,16 @@ export type Wish = {
   createdAt: string;
   fulfilledAt: string | null;
   reservation: Reservation;
+  // Who reserved a 'taken' wish: a member's name or a guest's nickname. Only other members
+  // are told; for the owner and for guests on a shared link it stays null.
+  reservedBy: string | null;
 };
 
 // A wish the viewer has reserved, with the person it is for.
 export type ReservedWish = { wish: Wish; owner: User };
+
+// Someone's list as it opens from a shared link, with or without an account.
+export type SharedList = { owner: { id: string; name: string }; wishes: Wish[] };
 
 export type WishInput = {
   title: string;
@@ -51,6 +58,7 @@ export type ApiErrorCode =
   | 'title_required'
   | 'cannot_reserve'
   | 'already_reserved'
+  | 'nickname_required'
   | 'invalid_invite'
   | 'confirm_email'
   | 'email_required'
@@ -110,4 +118,12 @@ export type Api = {
   listMyReservations: () => Promise<ReservedWish[]>;
   reserve: (wishId: string) => Promise<void>;
   unreserve: (wishId: string) => Promise<void>;
+
+  // The secret part of the link to someone's list, yours included. Null if they are gone.
+  getShareToken: (userId: string) => Promise<string | null>;
+  // A list opened from its link, as someone without an account sees it. The guest key is
+  // what this device keeps to recognise its own reservations. Null for an unknown link.
+  getSharedList: (token: string, guestKey: string | null) => Promise<SharedList | null>;
+  reserveAsGuest: (input: { token: string; wishId: string; guestKey: string; nickname: string }) => Promise<void>;
+  unreserveAsGuest: (input: { wishId: string; guestKey: string }) => Promise<void>;
 };

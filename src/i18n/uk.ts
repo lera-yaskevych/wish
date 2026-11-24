@@ -41,6 +41,7 @@ const errors: Record<ApiErrorCode | 'unknown', string> = {
   title_required: 'Дайте бажанню назву.',
   cannot_reserve: 'Це бажання не можна забронювати.',
   already_reserved: 'Хтось щойно забронював це бажання.',
+  nickname_required: 'Залиште ім’я, щоб інші знали, хто дарує.',
   invalid_invite: 'Код запрошення не підходить. Запитайте в того, хто вас запросив.',
   confirm_email: 'Перевірте пошту й підтвердьте адресу, а потім увійдіть.',
   email_required: 'Спершу введіть свою пошту вище.',
@@ -107,6 +108,7 @@ export const uk: Dictionary = {
     reserve: 'Бронюю',
     reservedByYou: 'Заброньовано вами',
     reserved: 'Заброньовано',
+    reservedBy: (name) => `Заброньовано: ${name}`,
     undo: 'Скасувати',
     undoReservation: 'Скасувати бронювання',
   },
@@ -123,9 +125,11 @@ export const uk: Dictionary = {
     reserveGift: 'Забронювати подарунок',
     alreadyReserved: 'Вже заброньовано',
     takenNote: 'Про цей подарунок уже подбали.',
+    takenNoteBy: (name) => `Про цей подарунок подбає ${name}.`,
     secretNote: (name) =>
-      `${firstName(name)} не побачить, хто забронював — інші друзі побачать лише, що подарунок зайнято.`,
-    secretNoteShort: (name) => `${firstName(name)} не побачить, хто забронював.`,
+      `${firstName(name)} побачить лише, що подарунок заброньовано, але не ким. Інші друзі побачать ваше ім’я.`,
+    secretNoteShort: (name) => `${firstName(name)} побачить лише, що подарунок заброньовано, але не ким.`,
+    reservedForYou: 'Хтось уже забронював це для вас',
     deleteTitle: 'Видалити це бажання?',
     deleteBody: (title) => `«${title}» зникне назавжди.`,
     deleteHint: 'Якщо ви вже отримали подарунок, позначте, що бажання збулось — воно збережеться в архіві.',
@@ -191,6 +195,27 @@ export const uk: Dictionary = {
       `${gifts} ${plural(gifts, 'подарунок', 'подарунки', 'подарунків')} для ${people} ${plural(people, 'людини', 'людей', 'людей')}`,
     emptyTitle: 'Поки нічого не заброньовано.',
     emptyBody: 'Коли ви забронюєте подарунок у списку друга, він з’явиться тут, щоб нічого не загубилося.',
+  },
+
+  share: {
+    list: 'Поділитися списком',
+    copied: 'Посилання скопійовано',
+    ownMessage: (link) => `Ось мій список бажань. Забронюйте те, що хочете подарувати: ${link}`,
+    friendMessage: (name, link) =>
+      `Список бажань: ${firstName(name)}. Забронюйте те, що хочете подарувати: ${link}`,
+  },
+
+  shared: {
+    intro: (name) =>
+      `Забронюйте те, що подаруєте, щоб ніхто не купив те саме. ${firstName(name)} побачить лише, що подарунок зайнято.`,
+    missingTitle: 'За цим посиланням списку немає.',
+    missingBody: 'Попросіть у того, хто його надіслав, нове.',
+    nicknameTitle: 'Хто дарує?',
+    nicknameBody: (name) =>
+      `Друзі, які користуються Wish, побачать це ім’я біля подарунка. ${firstName(name)} його не побачить.`,
+    nickname: 'Ваше ім’я',
+    nicknamePlaceholder: 'Тітка Ірина',
+    undoHint: 'Скасувати бронювання можна пізніше в цьому браузері.',
   },
 
   find: {

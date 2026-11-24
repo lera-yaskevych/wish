@@ -14,7 +14,9 @@ type SeedWish = {
   // "demo:<tint>" renders the tinted placeholder from the design instead of a photo.
   imageUri?: string;
   fulfilledAt?: string;
+  // A member's id, or the nickname of a guest who reserved from a shared link.
   reservedBy?: string;
+  reservedByGuest?: string;
 };
 
 type SeedUser = {
@@ -44,7 +46,7 @@ export const seedUsers: SeedUser[] = [
         imageUri: 'demo:sand',
       },
       { title: 'Linen bedding, oat', note: 'Double size · any neutral', imageUri: 'demo:sage' },
-      { title: 'Hiking poles', url: 'https://outdoor-shop.com/hiking-poles', price: '€75' },
+      { title: 'Hiking poles', url: 'https://outdoor-shop.com/hiking-poles', price: '€75', reservedBy: 'u-marta' },
       { title: 'A day trip somewhere by the sea — just the two of us.' },
       { title: 'Any book by Ursula K. Le Guin', note: 'Paperback is perfect' },
       { title: 'Enamel teapot', imageUri: 'demo:sand', fulfilledAt: '2026-10-03T10:00:00.000Z' },
@@ -75,7 +77,7 @@ export const seedUsers: SeedUser[] = [
         price: '€18',
         reservedBy: 'u-jonas',
       },
-      { title: 'Merino running socks', note: 'Size 38–40', price: '€22' },
+      { title: 'Merino running socks', note: 'Size 38–40', price: '€22', reservedByGuest: 'Aunt Iryna' },
       { title: 'Proofing basket', url: 'https://bakers-corner.com/banneton', price: '€24', imageUri: 'demo:sand' },
       { title: 'A long breakfast somewhere new.' },
       { title: 'The Dispossessed', note: 'Any edition' },

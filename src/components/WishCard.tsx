@@ -1,4 +1,4 @@
-import { Check, Link as LinkIcon } from 'lucide-react-native';
+import { Bookmark, Check, Link as LinkIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Wish } from '@/data';
@@ -13,7 +13,8 @@ import { WishImage } from './WishImage';
 type Props = {
   wish: Wish;
   onPress: () => void;
-  // Present on a friend's list: the card then shows who has it and offers to reserve.
+  // Present on a friend's list (or a shared one): the card then shows who has it and
+  // offers to reserve. Without it or onUnreserve, this is the owner's own list.
   onReserve?: () => void;
   // Alone, without onReserve, this is the overview of your reservations: every card
   // there is yours, so it reads like a plain wish with a way to release it.
@@ -28,19 +29,31 @@ export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
   const taken = wish.reservation === 'taken';
   const note = isNoteOnly(wish);
   const domain = wish.url ? domainOf(wish.url) : null;
-  const titleColor = taken ? colors.muted : colors.ink;
+  const titleColor = taken && friendView ? colors.muted : colors.ink;
+
+  // Who has it. The owner is told only that it is reserved; reservedBy is empty for them.
+  const status = mine ? (
+    <View style={styles.inline}>
+      <Check size={15} color={colors.green} strokeWidth={2.4} />
+      <Text style={styles.reservedByYou}>{t.card.reservedByYou}</Text>
+    </View>
+  ) : taken ? (
+    <View style={styles.inline}>
+      <Bookmark size={14} color={friendView ? colors.muted : colors.accent} strokeWidth={2} />
+      <Text style={[styles.reservedBy, !friendView && styles.reservedForOwner]} numberOfLines={1}>
+        {wish.reservedBy ? t.card.reservedBy(wish.reservedBy) : t.card.reserved}
+      </Text>
+    </View>
+  ) : null;
+
+  const summary = (
+    <Text style={type.sub} numberOfLines={1}>
+      {[wish.price, domain ?? wish.note].filter(Boolean).join(' · ')}
+    </Text>
+  );
 
   const details = friendView ? (
-    mine ? (
-      <View style={styles.inline}>
-        <Check size={15} color={colors.green} strokeWidth={2.4} />
-        <Text style={styles.reservedByYou}>{t.card.reservedByYou}</Text>
-      </View>
-    ) : (
-      <Text style={type.sub} numberOfLines={1}>
-        {[wish.price, domain ?? wish.note].filter(Boolean).join(' · ')}
-      </Text>
-    )
+    (status ?? summary)
   ) : domain ? (
     <View style={styles.inline}>
       {!wish.imageUri && <LinkIcon size={14} color={colors.muted} strokeWidth={2} />}
@@ -58,14 +71,12 @@ export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
     <Pressable accessibilityRole="button" accessibilityLabel={t.card.undoReservation} onPress={onUnreserve} hitSlop={10}>
       <Text style={styles.undo}>{t.card.undo}</Text>
     </Pressable>
-  ) : taken ? (
-    <Text style={styles.taken}>{t.card.reserved}</Text>
-  ) : (
+  ) : taken ? null : (
     <Button label={t.card.reserve} variant="outline" size="sm" onPress={onReserve} />
   );
 
   return (
-    <View style={[styles.card, mine && styles.mine, taken && styles.takenCard]}>
+    <View style={[styles.card, mine && styles.mine, taken && friendView && styles.takenCard]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={wish.title}
@@ -83,7 +94,7 @@ export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
           {note ? (
             <>
               <Text style={[type.quote, { color: titleColor }]}>{t.quote(wish.title)}</Text>
-              <Text style={[type.small, styles.noteLabel]}>{t.card.note}</Text>
+              <View style={styles.noteLabel}>{status ?? <Text style={type.small}>{t.card.note}</Text>}</View>
             </>
           ) : (
             <>
@@ -92,6 +103,7 @@ export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
               </Text>
               {details}
               {!friendView && !!wish.imageUri && !!wish.price && <Text style={type.price}>{wish.price}</Text>}
+              {!friendView && status}
             </>
           )}
         </View>
@@ -126,6 +138,7 @@ const styles = StyleSheet.create({
   inline: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   noteLabel: { marginTop: 6 },
   reservedByYou: { ...fonts.semibold, fontSize: 14.5, color: colors.green },
+  reservedBy: { ...fonts.medium, fontSize: 14.5, color: colors.muted, flexShrink: 1 },
+  reservedForOwner: { color: colors.accent },
   undo: { ...fonts.medium, fontSize: 15.5, color: colors.green, paddingHorizontal: 8 },
-  taken: { ...fonts.medium, fontSize: 14.5, color: colors.muted, paddingHorizontal: 4 },
 });

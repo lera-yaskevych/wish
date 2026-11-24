@@ -30,6 +30,7 @@ const errors: Record<ApiErrorCode | 'unknown', string> = {
   title_required: 'Give your wish a name.',
   cannot_reserve: 'This wish can’t be reserved.',
   already_reserved: 'Someone just reserved this one.',
+  nickname_required: 'Leave a name so others know who has it.',
   invalid_invite: 'That invite code isn’t right. Ask whoever invited you.',
   confirm_email: 'Check your email and confirm your address, then log in.',
   email_required: 'Type your email above first.',
@@ -95,6 +96,7 @@ export const en = {
     reserve: 'Reserve',
     reservedByYou: 'Reserved by you',
     reserved: 'Reserved',
+    reservedBy: (name: string) => `Reserved by ${name}`,
     undo: 'Undo',
     undoReservation: 'Undo reservation',
   },
@@ -111,9 +113,11 @@ export const en = {
     reserveGift: 'Reserve this gift',
     alreadyReserved: 'Already reserved',
     takenNote: 'Someone else is taking care of this one.',
+    takenNoteBy: (name: string) => `${name} is taking care of this one.`,
     secretNote: (name: string) =>
-      `${firstName(name)} won’t see who reserved it — other friends will just see it’s taken.`,
-    secretNoteShort: (name: string) => `${firstName(name)} won’t see who reserved it.`,
+      `${firstName(name)} will see it’s reserved, but not by whom. Other friends will see your name.`,
+    secretNoteShort: (name: string) => `${firstName(name)} will only see it’s reserved, not by whom.`,
+    reservedForYou: 'Someone has reserved this for you',
     deleteTitle: 'Delete this wish?',
     deleteBody: (title: string) => `“${title}” will be removed for good.`,
     deleteHint: 'If you received it, mark it as fulfilled instead — it’ll be kept in your archive.',
@@ -177,6 +181,28 @@ export const en = {
       `${gifts} ${gifts === 1 ? 'gift' : 'gifts'} for ${people} ${people === 1 ? 'person' : 'people'}`,
     emptyTitle: 'Nothing reserved yet.',
     emptyBody: 'When you reserve a gift on a friend’s list, it’s kept here so you don’t lose track.',
+  },
+
+  share: {
+    list: 'Share list',
+    copied: 'Link copied',
+    ownMessage: (link: string) => `Here’s my wishlist. Reserve what you’d like to give: ${link}`,
+    friendMessage: (name: string, link: string) =>
+      `Here’s ${firstName(name)}’s wishlist. Reserve what you’d like to give: ${link}`,
+  },
+
+  // A list opened from a shared link by someone who isn't signed in.
+  shared: {
+    intro: (name: string) =>
+      `Reserve what you’ll give, so nobody buys the same thing twice. ${firstName(name)} will only see that it’s taken.`,
+    missingTitle: 'This link doesn’t open a list.',
+    missingBody: 'Ask whoever sent it for a new one.',
+    nicknameTitle: 'Who’s giving it?',
+    nicknameBody: (name: string) =>
+      `Friends who use Wish will see this name next to the gift. ${firstName(name)} won’t.`,
+    nickname: 'Your name',
+    nicknamePlaceholder: 'Aunt Kate',
+    undoHint: 'You can undo it later from this browser.',
   },
 
   find: {

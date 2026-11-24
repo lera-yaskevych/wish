@@ -38,10 +38,20 @@ const signUp = async (name, inviteCode = INVITE) => {
   return { supabase, id: data.user?.id, error };
 };
 
-const reservationOf = async (supabase, ownerId, wishId) => {
+const visibleWish = async (supabase, ownerId, wishId) => {
   const { data, error } = await supabase.rpc('wishes_visible', { p_owner: ownerId });
   assert.equal(error, null);
-  return data.find((wish) => wish.id === wishId)?.reservation;
+  return data.find((wish) => wish.id === wishId);
+};
+
+const reservationOf = async (supabase, ownerId, wishId) => (await visibleWish(supabase, ownerId, wishId))?.reservation;
+
+const reservedByOf = async (supabase, ownerId, wishId) => (await visibleWish(supabase, ownerId, wishId))?.reserved_by;
+
+const sharedWish = async (token, wishId, guestKey = null) => {
+  const { data, error } = await client().rpc('shared_wishes', { p_token: token, p_guest_key: guestKey });
+  assert.equal(error, null);
+  return data.find((wish) => wish.id === wishId);
 };
 
 let passed = 0;
@@ -164,10 +174,12 @@ await test('nobody can add a wish to someone else’s list', async () => {
 
 // ---------- reservations: the surprise
 
-await test('a friend can reserve; they see "mine", another friend sees "taken"', async () => {
+await test('a friend can reserve; they see "mine", another friend sees "taken" and by whom', async () => {
   assert.equal((await anna.supabase.from('reservations').insert({ wish_id: wish.id })).error, null);
   assert.equal(await reservationOf(anna.supabase, owner.id, wish.id), 'mine');
+  assert.equal(await reservedByOf(anna.supabase, owner.id, wish.id), null);
   assert.equal(await reservationOf(bohdan.supabase, owner.id, wish.id), 'taken');
+  assert.equal(await reservedByOf(bohdan.supabase, owner.id, wish.id), 'Anna');
 });
 
 await test('the reserver can list their reservations with the wish and its owner; nobody else sees them', async () => {
@@ -181,10 +193,12 @@ await test('the reserver can list their reservations with the wish and its owner
   assert.deepEqual((await owner.supabase.from('reservations').select(overview)).data, []);
 });
 
-await test('the owner is told nothing about the reservation', async () => {
-  assert.equal(await reservationOf(owner.supabase, owner.id, wish.id), 'none');
+await test('the owner sees that a wish is reserved, never by whom', async () => {
+  assert.equal(await reservationOf(owner.supabase, owner.id, wish.id), 'taken');
+  assert.equal(await reservedByOf(owner.supabase, owner.id, wish.id), null);
   const single = await owner.supabase.rpc('wishes_visible', { p_wish: wish.id });
-  assert.equal(single.data[0].reservation, 'none');
+  assert.equal(single.data[0].reservation, 'taken');
+  assert.equal(single.data[0].reserved_by, null);
   assert.deepEqual((await owner.supabase.from('reservations').select()).data, []);
 });
 
@@ -216,6 +230,91 @@ await test('marking a wish as received releases the reservation and hides it fro
   assert.deepEqual((await anna.supabase.from('reservations').select()).data, []);
   await owner.supabase.from('wishes').update({ fulfilled_at: null }).eq('id', wish.id);
   assert.equal(await reservationOf(anna.supabase, owner.id, wish.id), 'none');
+});
+
+// ---------- share links and guests
+
+const guestKey = `guest-key-${run}-0123456789`;
+const otherGuestKey = `other-guest-${run}-0123456789`;
+const { data: token } = await anna.supabase.rpc('share_token', { p_user: owner.id });
+
+await test('any member can get the link to a list, the same link every time; nobody else can', async () => {
+  assert.match(token ?? '', /^[0-9a-f]{32}$/);
+  assert.equal((await owner.supabase.rpc('share_token', { p_user: owner.id })).data, token);
+  assert.equal((await bohdan.supabase.rpc('share_token', { p_user: owner.id })).data, token);
+  assert.ok((await client().rpc('share_token', { p_user: owner.id })).error);
+  const direct = await owner.supabase.from('share_links').select();
+  assert.ok(direct.error || direct.data.length === 0, 'links are handed out only by share_token');
+});
+
+await test('a link opens its list without an account; an unknown link opens nothing', async () => {
+  const anon = client();
+  const { data: found } = await anon.rpc('shared_owner', { p_token: token });
+  assert.deepEqual(found, [{ id: owner.id, name: 'Olena' }]);
+  assert.equal((await sharedWish(token, wish.id))?.title, 'Hiking poles');
+  assert.deepEqual((await anon.rpc('shared_owner', { p_token: 'nope' })).data, []);
+  assert.deepEqual((await anon.rpc('shared_wishes', { p_token: 'nope' })).data, []);
+  // The link opens one list, never the tables behind it.
+  assert.deepEqual((await anon.from('wishes').select()).data, []);
+});
+
+await test('a guest can reserve with a nickname; it shows as theirs only with their key', async () => {
+  const anon = client();
+  const reserve = (args) =>
+    anon.rpc('reserve_as_guest', { p_token: token, p_wish: wish.id, p_guest_key: guestKey, p_name: 'Aunt Iryna', ...args });
+  assert.equal((await reserve({ p_name: '   ' })).error?.code, '22023');
+  assert.equal((await reserve({ p_guest_key: 'short' })).error?.code, '22023');
+  assert.equal((await reserve({})).error, null);
+  assert.equal((await reserve({})).error, null, 'reserving again with the same key counts as done');
+  assert.equal((await reserve({ p_guest_key: otherGuestKey })).error?.code, '23505');
+
+  assert.equal((await sharedWish(token, wish.id, guestKey)).reservation, 'mine');
+  assert.equal((await sharedWish(token, wish.id, otherGuestKey)).reservation, 'taken');
+  assert.equal((await sharedWish(token, wish.id)).reservation, 'taken');
+});
+
+await test('guests are never told who reserved; members are; the owner is not', async () => {
+  for (const key of [null, guestKey, otherGuestKey]) assert.equal((await sharedWish(token, wish.id, key)).reserved_by, null);
+  assert.equal(await reservedByOf(bohdan.supabase, owner.id, wish.id), 'Aunt Iryna');
+  assert.equal(await reservationOf(owner.supabase, owner.id, wish.id), 'taken');
+  assert.equal(await reservedByOf(owner.supabase, owner.id, wish.id), null);
+  const member = await bohdan.supabase.from('reservations').insert({ wish_id: wish.id });
+  assert.equal(member.error?.code, '23505');
+});
+
+await test('a guest can reserve only from the link of the wish’s owner', async () => {
+  const { data: annaWish } = await anna.supabase.from('wishes').insert({ title: 'Tea' }).select().single();
+  const { error } = await client().rpc('reserve_as_guest', {
+    p_token: token,
+    p_wish: annaWish.id,
+    p_guest_key: guestKey,
+    p_name: 'Sneaky',
+  });
+  assert.equal(error?.code, '42501');
+  await anna.supabase.from('wishes').delete().eq('id', annaWish.id);
+});
+
+await test('only the guest’s own key undoes their reservation', async () => {
+  const anon = client();
+  await anon.rpc('unreserve_as_guest', { p_wish: wish.id, p_guest_key: otherGuestKey });
+  await anon.rpc('unreserve_as_guest', { p_wish: wish.id, p_guest_key: null });
+  await anna.supabase.from('reservations').delete().eq('wish_id', wish.id);
+  assert.equal((await sharedWish(token, wish.id, guestKey)).reservation, 'mine');
+  assert.equal((await anon.rpc('unreserve_as_guest', { p_wish: wish.id, p_guest_key: guestKey })).error, null);
+  assert.equal((await sharedWish(token, wish.id)).reservation, 'none');
+});
+
+await test('received wishes drop off the shared list and cannot be reserved by guests', async () => {
+  await owner.supabase.from('wishes').update({ fulfilled_at: new Date().toISOString() }).eq('id', wish.id);
+  assert.equal(await sharedWish(token, wish.id), undefined);
+  const { error } = await client().rpc('reserve_as_guest', {
+    p_token: token,
+    p_wish: wish.id,
+    p_guest_key: guestKey,
+    p_name: 'Late',
+  });
+  assert.equal(error?.code, '42501');
+  await owner.supabase.from('wishes').update({ fulfilled_at: null }).eq('id', wish.id);
 });
 
 // ---------- following and finding people

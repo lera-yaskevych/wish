@@ -34,6 +34,24 @@ export const usePeopleSearch = (query: string) =>
 export const useInviteCode = () =>
   useQuery({ queryKey: ['invite-code'], queryFn: api.getInviteCode, staleTime: Infinity });
 
+// Fetched before anyone taps Share: phone browsers only open the share sheet straight
+// from a tap, not after waiting on the network.
+export const useShareToken = (userId: string | undefined) =>
+  useQuery({
+    queryKey: ['share-token', userId],
+    queryFn: () => api.getShareToken(userId!),
+    enabled: !!userId,
+    staleTime: Infinity,
+  });
+
+// `guestKey` is undefined while the device's guest key is still being read.
+export const useSharedList = (token: string, guestKey: string | null | undefined) =>
+  useQuery({
+    queryKey: ['shared', token, guestKey],
+    queryFn: () => api.getSharedList(token, guestKey ?? null),
+    enabled: !!token && guestKey !== undefined,
+  });
+
 // Lists are tiny, so every write simply refreshes whatever is on screen.
 const useWrite = <TArgs, TResult>(write: (args: TArgs) => Promise<TResult>) => {
   const queryClient = useQueryClient();
@@ -50,3 +68,5 @@ export const useFollow = () => useWrite(api.follow);
 export const useUnfollow = () => useWrite(api.unfollow);
 export const useReserve = () => useWrite(api.reserve);
 export const useUnreserve = () => useWrite(api.unreserve);
+export const useReserveAsGuest = () => useWrite(api.reserveAsGuest);
+export const useUnreserveAsGuest = () => useWrite(api.unreserveAsGuest);

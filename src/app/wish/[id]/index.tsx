@@ -96,8 +96,14 @@ const WishDetail = () => {
       </>
     ) : wish.reservation === 'taken' ? (
       <>
-        <Button label={t.wish.alreadyReserved} variant="outline" disabled />
-        <Text style={[type.small, styles.footnote]}>{t.wish.takenNote}</Text>
+        <Button
+          label={wish.reservedBy ? t.card.reservedBy(wish.reservedBy) : t.wish.alreadyReserved}
+          variant="outline"
+          disabled
+        />
+        <Text style={[type.small, styles.footnote]}>
+          {wish.reservedBy ? t.wish.takenNoteBy(wish.reservedBy) : t.wish.takenNote}
+        </Text>
       </>
     ) : (
       <>
@@ -126,6 +132,12 @@ const WishDetail = () => {
             <View style={styles.fulfilled}>
               <Check size={15} color={colors.green} strokeWidth={2.2} />
               <Text style={styles.fulfilledLabel}>{t.wish.fulfilledOn(wish.fulfilledAt)}</Text>
+            </View>
+          )}
+          {own && wish.reservation === 'taken' && (
+            <View style={styles.fulfilled}>
+              <Bookmark size={15} color={colors.accent} strokeWidth={2.2} />
+              <Text style={styles.reservedForYou}>{t.wish.reservedForYou}</Text>
             </View>
           )}
           <Text style={isNoteOnly(wish) ? styles.noteTitle : type.title}>
@@ -200,6 +212,7 @@ const styles = StyleSheet.create({
   eyebrow: { marginBottom: 8 },
   fulfilled: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
   fulfilledLabel: { ...fonts.medium, fontSize: 14.5, color: colors.green },
+  reservedForYou: { ...fonts.medium, fontSize: 14.5, color: colors.accent },
   noteTitle: { ...fonts.serifItalic, fontSize: 32, lineHeight: 38, color: colors.ink },
   price: { ...fonts.bold, fontSize: 20, color: colors.ink, marginTop: 8 },
   note: { marginTop: 18 },

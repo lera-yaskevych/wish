@@ -61,6 +61,9 @@ const RootNavigator = () => {
         <Stack.Screen name="wish/[id]/edit" options={{ presentation: 'modal' }} />
         <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
       </Stack.Protected>
+      {/* A shared list opens for anyone with its link. Kept last so it is never the screen
+          the app falls back to when someone signs in or out. */}
+      <Stack.Screen name="list/[token]" />
     </Stack>
   );
 };
