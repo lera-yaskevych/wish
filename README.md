@@ -19,6 +19,11 @@ to the home screen like an app. English, Ukrainian and Turkish.
   see who reserved it, so you can team up. The owner of the list only sees that it
   is reserved, never by whom, so the surprise is kept. The Reserved tab lists
   everything you have promised to give.
+- **Giving.** Once you have given a gift you reserved, open it and tap **Mark as
+  given**. The owner is asked whether it arrived: **Yes, I got it** moves it to
+  their archive, **No, not yet** keeps it on the list, still reserved by you. They
+  are still not told who it was from. The owner can mark anything as received with
+  **I got this** at any time, asked or not.
 - **Sharing a list.** Tap **Share list** on your own list or a friend's to send a
   link. Anyone with the link can see the list without an account and reserve a
   wish by leaving a nickname. Friends in the app see that nickname. People on the
@@ -28,7 +33,8 @@ to the home screen like an app. English, Ukrainian and Turkish.
 - **Invite only.** Creating an account needs an invite code, so lists are seen only
   by people who were invited.
 - **Notifications.** Turn them on in your profile to hear when someone you follow
-  adds a wish. On iPhone this works once the app is on the Home Screen.
+  adds a wish, and when someone marks a gift for you as given. On iPhone this works
+  once the app is on the Home Screen.
 - **Languages.** English, Ukrainian and Turkish. The app follows the phone's
   language; switch in your profile or from the links on the sign-up screen.
 
@@ -56,7 +62,7 @@ wishes and photos are stored in [Supabase](https://supabase.com). The tables, an
 the rules for who may see what, are in [`supabase/migrations`](supabase/migrations).
 It is hosted on [Vercel](https://vercel.com), which redeploys on every push to `main`.
 Notifications are web push: the database calls the function in [`api/push.ts`](api/push.ts)
-whenever a wish is added.
+whenever a wish is added or a gift is marked as given.
 
 These rules are enforced by the database itself:
 
@@ -66,6 +72,8 @@ These rules are enforced by the database itself:
   the owner cannot find out by opening their own link signed out.
 - A shared link opens one person's current wishes and nothing else. It is a random
   code, not the person's id, and a guest can reserve only from that list.
+- Only the person who reserved a wish can mark it as given, and only its owner can
+  answer. Other friends are not told it was given.
 - Once a wish is marked as received, friends no longer see it.
 
 ## Running it locally

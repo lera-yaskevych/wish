@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
-import { ArrowUpRight, Bookmark, Check, ChevronLeft, Link as LinkIcon, Pencil, RotateCcw } from 'lucide-react-native';
+import { ArrowUpRight, Bookmark, Check, ChevronLeft, Gift, Link as LinkIcon, Pencil, RotateCcw } from 'lucide-react-native';
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,9 @@ import { WishImage } from '@/components/WishImage';
 import { useMe } from '@/data/auth';
 import {
   useDeleteWish,
+  useDismissGiven,
   useFulfillWish,
+  useMarkGiven,
   useProfile,
   useReleaseGuestReservation,
   useReserve,
@@ -33,6 +35,7 @@ const WishDetail = () => {
   const { data: owner } = useProfile(wish && wish.ownerId !== me.id ? wish.ownerId : undefined);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingRelease, setConfirmingRelease] = useState(false);
+  const [confirmingGiven, setConfirmingGiven] = useState(false);
 
   const fulfill = useFulfillWish();
   const restore = useRestoreWish();
@@ -40,6 +43,8 @@ const WishDetail = () => {
   const reserve = useReserve();
   const unreserve = useUnreserve();
   const release = useReleaseGuestReservation();
+  const markGiven = useMarkGiven();
+  const dismissGiven = useDismissGiven();
 
   // Where the back button leads when this screen was opened directly and has nothing
   // beneath it: a friend's wish belongs with their list, your own with yours.
@@ -86,22 +91,57 @@ const WishDetail = () => {
     goBack();
   };
 
+  const sayGiven = async () => {
+    await markGiven.mutateAsync({ wishId: wish.id, given: true });
+    setConfirmingGiven(false);
+  };
+
+  // Once someone marks it as given, the owner answers here: yes is the same as "I got this".
   const ownerActions = wish.fulfilledAt ? (
     <Button label={t.wish.putBack} icon={RotateCcw} loading={restore.isPending} onPress={() => restore.mutate(wish.id)} />
+  ) : wish.given ? (
+    <>
+      <Button label={t.given.yes} icon={Check} loading={fulfill.isPending} onPress={markFulfilled} />
+      <Button
+        label={t.given.no}
+        variant="outline"
+        loading={dismissGiven.isPending}
+        onPress={() => dismissGiven.mutate(wish.id)}
+      />
+    </>
   ) : (
     <Button label={t.wish.gotThis} icon={Check} loading={fulfill.isPending} onPress={markFulfilled} />
   );
 
+  const reserverActions = wish.given ? (
+    <>
+      <View style={styles.reservedByYou}>
+        <Gift size={17} color={colors.green} strokeWidth={2.2} />
+        <Text style={styles.reservedByYouLabel}>{t.card.givenByYou}</Text>
+      </View>
+      <Button
+        label={t.given.undo}
+        variant="outline"
+        loading={markGiven.isPending}
+        onPress={() => markGiven.mutate({ wishId: wish.id, given: false })}
+      />
+      {owner && <Text style={[type.small, styles.footnote]}>{t.given.waiting(owner.name)}</Text>}
+    </>
+  ) : (
+    <>
+      <View style={styles.reservedByYou}>
+        <Check size={17} color={colors.green} strokeWidth={2.4} />
+        <Text style={styles.reservedByYouLabel}>{t.card.reservedByYou}</Text>
+      </View>
+      <Button label={t.given.mark} icon={Gift} onPress={() => setConfirmingGiven(true)} />
+      <Button label={t.card.undoReservation} variant="outline" loading={unreserve.isPending} onPress={() => unreserve.mutate(wish.id)} />
+      {owner && <Text style={[type.small, styles.footnote]}>{t.wish.secretNoteShort(owner.name)}</Text>}
+    </>
+  );
+
   const friendActions =
     wish.reservation === 'mine' ? (
-      <>
-        <View style={styles.reservedByYou}>
-          <Check size={17} color={colors.green} strokeWidth={2.4} />
-          <Text style={styles.reservedByYouLabel}>{t.card.reservedByYou}</Text>
-        </View>
-        <Button label={t.card.undoReservation} variant="outline" loading={unreserve.isPending} onPress={() => unreserve.mutate(wish.id)} />
-        {owner && <Text style={[type.small, styles.footnote]}>{t.wish.secretNoteShort(owner.name)}</Text>}
-      </>
+      reserverActions
     ) : wish.reservation === 'taken' ? (
       <>
         <Button
@@ -142,7 +182,16 @@ const WishDetail = () => {
               <Text style={styles.fulfilledLabel}>{t.wish.fulfilledOn(wish.fulfilledAt)}</Text>
             </View>
           )}
-          {own && wish.reservation === 'taken' && (
+          {own && wish.given && (
+            <View style={styles.reservedNotice}>
+              <View style={styles.inline}>
+                <Gift size={15} color={colors.accent} strokeWidth={2.2} />
+                <Text style={styles.reservedForYou}>{t.given.notice}</Text>
+              </View>
+              <Text style={type.small}>{t.given.question}</Text>
+            </View>
+          )}
+          {own && wish.reservation === 'taken' && !wish.given && (
             <View style={styles.reservedNotice}>
               <View style={styles.inline}>
                 <Bookmark size={15} color={colors.accent} strokeWidth={2.2} />
@@ -204,6 +253,18 @@ const WishDetail = () => {
           <Text style={styles.editLabel}>{t.wish.edit}</Text>
         </Pressable>
       )}
+
+      {/* Asked first: the owner is notified straight away, so an early tap would spoil the surprise. */}
+      <Sheet visible={confirmingGiven} onClose={() => setConfirmingGiven(false)}>
+        <Text style={styles.sheetTitle}>{t.given.confirmTitle}</Text>
+        {owner && <Text style={[type.body, styles.sheetBody]}>{t.given.confirmBody(owner.name)}</Text>}
+        <View style={styles.sheetActions}>
+          <Button label={t.given.confirm} icon={Gift} loading={markGiven.isPending} onPress={sayGiven} />
+        </View>
+        <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setConfirmingGiven(false)} style={styles.cancel}>
+          <Text style={styles.cancelLabel}>{t.common.cancel}</Text>
+        </Pressable>
+      </Sheet>
 
       <Sheet visible={confirmingRelease} onClose={() => setConfirmingRelease(false)}>
         <Text style={styles.sheetTitle}>{t.wish.removeReservationTitle}</Text>

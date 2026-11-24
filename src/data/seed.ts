@@ -17,6 +17,8 @@ type SeedWish = {
   // A member's id, or the nickname of a guest who reserved from a shared link.
   reservedBy?: string;
   reservedByGuest?: string;
+  // When the member in reservedBy marked it as given; the owner is still to confirm.
+  givenAt?: string;
 };
 
 type SeedUser = {
@@ -46,7 +48,13 @@ export const seedUsers: SeedUser[] = [
         imageUri: 'demo:sand',
       },
       { title: 'Linen bedding, oat', note: 'Double size · any neutral', imageUri: 'demo:sage' },
-      { title: 'Hiking poles', url: 'https://outdoor-shop.com/hiking-poles', price: '€75', reservedBy: 'u-marta' },
+      {
+        title: 'Hiking poles',
+        url: 'https://outdoor-shop.com/hiking-poles',
+        price: '€75',
+        reservedBy: 'u-marta',
+        givenAt: '2026-11-20T10:00:00.000Z',
+      },
       { title: 'A day trip somewhere by the sea — just the two of us.' },
       { title: 'Any book by Ursula K. Le Guin', note: 'Paperback is perfect', reservedByGuest: 'Grandma Olha' },
       { title: 'Enamel teapot', imageUri: 'demo:sand', fulfilledAt: '2026-10-03T10:00:00.000Z' },

@@ -48,6 +48,8 @@ const reservationOf = async (supabase, ownerId, wishId) => (await visibleWish(su
 
 const reservedByOf = async (supabase, ownerId, wishId) => (await visibleWish(supabase, ownerId, wishId))?.reserved_by;
 
+const givenOf = async (supabase, ownerId, wishId) => (await visibleWish(supabase, ownerId, wishId))?.given;
+
 const sharedWish = async (token, wishId, guestKey = null) => {
   const { data, error } = await client().rpc('shared_wishes', { p_token: token, p_guest_key: guestKey });
   assert.equal(error, null);
@@ -183,7 +185,7 @@ await test('a friend can reserve; they see "mine", another friend sees "taken" a
 });
 
 await test('the reserver can list their reservations with the wish and its owner; nobody else sees them', async () => {
-  const overview = 'wish:wishes(*, owner:profiles!owner_id(id, name, username, birthday))';
+  const overview = 'given_at, wish:wishes(*, owner:profiles!owner_id(id, name, username, birthday))';
   const mine = await anna.supabase.from('reservations').select(overview);
   assert.equal(mine.error, null);
   assert.equal(mine.data.length, 1);
@@ -223,13 +225,50 @@ await test('nobody can reserve in someone else’s name', async () => {
   assert.equal((await anna.supabase.from('reservations').insert({ wish_id: wish.id })).error, null);
 });
 
+// ---------- marking a gift as given
+
+await test('only the reserver can mark a wish as given; only they and the owner are told', async () => {
+  assert.equal(await givenOf(owner.supabase, owner.id, wish.id), false);
+  assert.ok((await client().rpc('mark_given', { p_wish: wish.id })).error);
+  await bohdan.supabase.rpc('mark_given', { p_wish: wish.id });
+  await owner.supabase.rpc('mark_given', { p_wish: wish.id });
+  assert.equal(await givenOf(owner.supabase, owner.id, wish.id), false, 'nobody else can say it for them');
+
+  assert.equal((await anna.supabase.rpc('mark_given', { p_wish: wish.id })).error, null);
+  assert.equal(await givenOf(owner.supabase, owner.id, wish.id), true);
+  assert.equal(await givenOf(anna.supabase, owner.id, wish.id), true);
+  assert.equal(await givenOf(bohdan.supabase, owner.id, wish.id), false, 'other friends are not told');
+  assert.equal(await reservedByOf(owner.supabase, owner.id, wish.id), null, 'the owner still is not told who');
+  const row = await anna.supabase.from('reservations').select('given_at').eq('wish_id', wish.id).single();
+  assert.ok(row.data.given_at);
+
+  assert.equal((await anna.supabase.rpc('mark_given', { p_wish: wish.id, p_given: false })).error, null);
+  assert.equal(await givenOf(owner.supabase, owner.id, wish.id), false, 'the reserver can take it back');
+});
+
+await test('only the owner can answer "not yet", and the reservation stays', async () => {
+  await anna.supabase.rpc('mark_given', { p_wish: wish.id });
+  assert.ok((await client().rpc('dismiss_given', { p_wish: wish.id })).error);
+  await bohdan.supabase.rpc('dismiss_given', { p_wish: wish.id });
+  await anna.supabase.rpc('dismiss_given', { p_wish: wish.id });
+  assert.equal(await givenOf(owner.supabase, owner.id, wish.id), true, 'only the owner answers');
+
+  assert.equal((await owner.supabase.rpc('dismiss_given', { p_wish: wish.id })).error, null);
+  assert.equal(await givenOf(owner.supabase, owner.id, wish.id), false);
+  assert.equal(await givenOf(anna.supabase, owner.id, wish.id), false);
+  assert.equal(await reservationOf(anna.supabase, owner.id, wish.id), 'mine');
+});
+
 await test('marking a wish as received releases the reservation and hides it from friends', async () => {
+  // Answering "yes" to a gift marked as given is the same as marking it as received.
+  await anna.supabase.rpc('mark_given', { p_wish: wish.id });
   await owner.supabase.from('wishes').update({ fulfilled_at: new Date().toISOString() }).eq('id', wish.id);
   assert.equal(await reservationOf(anna.supabase, owner.id, wish.id), undefined);
   assert.deepEqual((await anna.supabase.from('wishes').select().eq('id', wish.id)).data, []);
   assert.deepEqual((await anna.supabase.from('reservations').select()).data, []);
   await owner.supabase.from('wishes').update({ fulfilled_at: null }).eq('id', wish.id);
   assert.equal(await reservationOf(anna.supabase, owner.id, wish.id), 'none');
+  assert.equal(await givenOf(owner.supabase, owner.id, wish.id), false);
 });
 
 // ---------- share links and guests

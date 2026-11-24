@@ -2,18 +2,42 @@ import { timingSafeEqual } from 'node:crypto';
 
 import webpush from 'web-push';
 
-// Called by the database when someone adds a wish (see supabase/migrations). Sends
-// each follower's devices a notification written in that device's language.
+// Called by the database (see supabase/migrations) when someone adds a wish, and when a
+// gift is marked as given. Sends each device a notification written in its language.
 
 type Target = { endpoint: string; p256dh: string; auth: string; language: string };
 
-type Body = { ownerId: string; ownerName: string; wishTitle: string; targets: Target[] };
+// Senders from before gifts could be marked as given leave out `kind`.
+type Body = { targets: Target[] } & (
+  | { kind?: 'new_wish'; ownerId: string; ownerName: string; wishTitle: string }
+  | { kind: 'gift_given'; wishId: string; wishTitle: string }
+);
 
 // Names stay in the form they were typed, so each phrase must work without a case ending.
-const TITLES: Record<string, (name: string) => string> = {
+const NEW_WISH: Record<string, (name: string) => string> = {
   en: (name) => `${name} added a wish`,
   uk: (name) => `${name}: нове бажання`,
   tr: (name) => `${name} yeni bir dilek ekledi`,
+};
+
+// For the owner of the wish, who is never told who gave it.
+const GIFT_GIVEN: Record<string, { title: string; body: (wish: string) => string }> = {
+  en: { title: 'Did you get it?', body: (wish) => `Someone says they’ve given you “${wish}”.` },
+  uk: { title: 'Ви це отримали?', body: (wish) => `Хтось каже, що вже подарував вам «${wish}».` },
+  tr: { title: 'Hediyeni aldın mı?', body: (wish) => `Biri “${wish}” dileğini gerçekleştirdiğini söylüyor.` },
+};
+
+const messageFor = (body: Body, language: string) => {
+  if (body.kind === 'gift_given') {
+    const words = GIFT_GIVEN[language] ?? GIFT_GIVEN.en;
+    return { title: words.title, body: words.body(body.wishTitle), url: `/wish/${body.wishId}` };
+  }
+  const firstName = body.ownerName.trim().split(/\s+/)[0];
+  return {
+    title: (NEW_WISH[language] ?? NEW_WISH.en)(firstName),
+    body: body.wishTitle,
+    url: `/friends/${body.ownerId}`,
+  };
 };
 
 const DAY = 60 * 60 * 24;
@@ -43,19 +67,14 @@ export const POST = async (request: Request) => {
   if (!secret || !publicKey || !privateKey) return new Response('Not configured', { status: 503 });
   if (!sameSecret(request.headers.get('authorization'), secret)) return new Response('Forbidden', { status: 403 });
 
-  const { ownerId, ownerName, wishTitle, targets } = (await request.json()) as Body;
-  const firstName = ownerName.trim().split(/\s+/)[0];
+  const body = (await request.json()) as Body;
   // Push services want to know who is sending; the site's own address serves as that contact.
   const vapid = { subject: new URL(request.url).origin, publicKey, privateKey };
 
   const gone: string[] = [];
   await Promise.all(
-    targets.map(async ({ endpoint, p256dh, auth, language }) => {
-      const notification = JSON.stringify({
-        title: (TITLES[language] ?? TITLES.en)(firstName),
-        body: wishTitle,
-        url: `/friends/${ownerId}`,
-      });
+    body.targets.map(async ({ endpoint, p256dh, auth, language }) => {
+      const notification = JSON.stringify(messageFor(body, language));
       try {
         await webpush.sendNotification({ endpoint, keys: { p256dh, auth } }, notification, {
           vapidDetails: vapid,
@@ -69,5 +88,5 @@ export const POST = async (request: Request) => {
   );
 
   if (gone.length) await forget(gone, secret);
-  return Response.json({ sent: targets.length - gone.length, removed: gone.length });
+  return Response.json({ sent: body.targets.length - gone.length, removed: gone.length });
 };

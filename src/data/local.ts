@@ -15,11 +15,13 @@ const SESSION_KEY = 'wishlist.session';
 type StoredUser = User & { email: string; salt: string; passwordHash: string };
 // A wish is reserved by a member (reservedBy, their id) or by a guest from a shared link
 // (guestName, with the hash of the key their device keeps). The guest fields are optional
-// so demo data saved before they existed still loads.
-type StoredWish = Omit<Wish, 'reservation' | 'reservedBy' | 'reservedByGuest'> & {
+// so demo data saved before they existed still loads. givenAt is set once the member who
+// reserved it marks it as given, and is optional for the same reason.
+type StoredWish = Omit<Wish, 'reservation' | 'reservedBy' | 'reservedByGuest' | 'given'> & {
   reservedBy: string | null;
   guestName?: string | null;
   guestKeyHash?: string | null;
+  givenAt?: string | null;
 };
 type Db = {
   users: StoredUser[];
@@ -40,6 +42,7 @@ const releaseReservation = (wish: StoredWish) => {
   wish.reservedBy = null;
   wish.guestName = null;
   wish.guestKeyHash = null;
+  wish.givenAt = null;
 };
 
 const buildSeedDb = async (): Promise<Db> => {
@@ -72,6 +75,7 @@ const buildSeedDb = async (): Promise<Db> => {
         // A key nobody holds: the demo guest's reservation can be seen but not undone.
         guestName: wish.reservedByGuest ?? null,
         guestKeyHash: wish.reservedByGuest ? hashGuestKey(newId()) : null,
+        givenAt: wish.givenAt ?? null,
       });
     });
   }
@@ -95,21 +99,31 @@ const loadDb = () => {
 
 const toUser = ({ id, name, username, birthday }: StoredUser): User => ({ id, name, username, birthday });
 
-// Mirrors wishes_visible: the owner learns only that a wish is reserved, other members also by whom.
-const toWish = (db: Db, { reservedBy, guestName, guestKeyHash, ...wish }: StoredWish, viewerId: string): Wish => {
+// Mirrors wishes_visible: the owner learns only that a wish is reserved, other members also by
+// whom. Only the owner and the person who reserved it learn that it has been given.
+const toWish = (
+  db: Db,
+  { reservedBy, guestName, guestKeyHash, givenAt, ...wish }: StoredWish,
+  viewerId: string,
+): Wish => {
   const reserved = !!reservedBy || !!guestName;
   const mine = !!reservedBy && reservedBy === viewerId;
+  const own = wish.ownerId === viewerId;
   const name = reservedBy ? (db.users.find((u) => u.id === reservedBy)?.name ?? null) : (guestName ?? null);
   return {
     ...wish,
     reservation: !reserved ? 'none' : mine ? 'mine' : 'taken',
-    reservedBy: !reserved || mine || wish.ownerId === viewerId ? null : name,
+    reservedBy: !reserved || mine || own ? null : name,
     reservedByGuest: !reservedBy && !!guestName,
+    given: !!reservedBy && !!givenAt && (mine || own),
   };
 };
 
 // Mirrors shared_wishes: a guest learns only which wishes are taken and which are theirs.
-const toGuestWish = ({ reservedBy, guestName, guestKeyHash, ...wish }: StoredWish, guestKey: string | null): Wish => ({
+const toGuestWish = (
+  { reservedBy, guestName, guestKeyHash, givenAt, ...wish }: StoredWish,
+  guestKey: string | null,
+): Wish => ({
   ...wish,
   reservation:
     !reservedBy && !guestName
@@ -119,6 +133,7 @@ const toGuestWish = ({ reservedBy, guestName, guestKeyHash, ...wish }: StoredWis
         : 'taken',
   reservedBy: null,
   reservedByGuest: false,
+  given: false,
 });
 
 const ownerOfToken = (db: Db, token: string) => db.users.find((u) => shareTokenOf(u.id) === token);
@@ -378,6 +393,23 @@ export const localApi: Api = {
     const wish = db.wishes.find((w) => w.id === wishId);
     if (wish?.reservedBy !== viewer.id) return;
     releaseReservation(wish);
+    await saveDb(db);
+  },
+
+  // There is no server to notify the owner from; they see the question in the app.
+  markGiven: async (wishId, given) => {
+    const db = await loadDb();
+    const viewer = await requireViewer(db);
+    const wish = db.wishes.find((w) => w.id === wishId && w.reservedBy === viewer.id);
+    if (!wish) return;
+    wish.givenAt = given ? (wish.givenAt ?? new Date().toISOString()) : null;
+    await saveDb(db);
+  },
+
+  dismissGiven: async (wishId) => {
+    const db = await loadDb();
+    const viewer = await requireViewer(db);
+    requireOwnWish(db, viewer, wishId).givenAt = null;
     await saveDb(db);
   },
 

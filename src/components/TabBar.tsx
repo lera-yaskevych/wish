@@ -3,6 +3,7 @@ import { Bookmark, Gift, Users, type LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useMyWishes } from '@/data/hooks';
 import { useT } from '@/i18n';
 import { colors, fonts } from '@/theme';
 
@@ -15,6 +16,9 @@ const tabs: Record<string, { key: 'myList' | 'friends' | 'reserved'; icon: Lucid
 export const TabBar = ({ state, navigation }: BottomTabBarProps) => {
   const insets = useSafeAreaInsets();
   const t = useT();
+  // A dot on My list while a gift someone marked as given waits for an answer.
+  const { data: myWishes } = useMyWishes();
+  const asking = !!myWishes?.some((wish) => wish.given);
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       {state.routes.map((route, index) => {
@@ -34,7 +38,10 @@ export const TabBar = ({ state, navigation }: BottomTabBarProps) => {
               const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
             }}>
-            <Icon size={24} color={color} strokeWidth={focused ? 2 : 1.75} />
+            <View>
+              <Icon size={24} color={color} strokeWidth={focused ? 2 : 1.75} />
+              {tab.key === 'myList' && asking && <View style={styles.dot} />}
+            </View>
             <Text style={[styles.label, { color }, focused ? fonts.semibold : fonts.sans]}>
               {t.tabs[tab.key]}
             </Text>
@@ -56,4 +63,15 @@ const styles = StyleSheet.create({
   },
   tab: { alignItems: 'center', gap: 5, minWidth: 92 },
   label: { fontSize: 12.5 },
+  dot: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: colors.bg,
+    backgroundColor: colors.accent,
+  },
 });

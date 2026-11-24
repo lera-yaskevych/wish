@@ -1,4 +1,4 @@
-import { Bookmark, Check, Link as LinkIcon } from 'lucide-react-native';
+import { Bookmark, Check, Gift, Link as LinkIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Wish } from '@/data';
@@ -32,7 +32,15 @@ export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
   const titleColor = taken && friendView ? colors.muted : colors.ink;
 
   // Who has it. The owner is told only that it is reserved; reservedBy is empty for them.
-  const status = mine ? (
+  // `given` is only ever set for the owner and for whoever reserved it.
+  const status = wish.given ? (
+    <View style={styles.inline}>
+      <Gift size={15} color={friendView ? colors.green : colors.accent} strokeWidth={2.2} />
+      <Text style={friendView ? styles.reservedByYou : [styles.reservedBy, styles.reservedForOwner]} numberOfLines={1}>
+        {friendView ? t.card.givenByYou : t.card.markedGiven}
+      </Text>
+    </View>
+  ) : mine ? (
     <View style={styles.inline}>
       <Check size={15} color={colors.green} strokeWidth={2.4} />
       <Text style={styles.reservedByYou}>{t.card.reservedByYou}</Text>
@@ -67,7 +75,8 @@ export const WishCard = ({ wish, onPress, onReserve, onUnreserve }: Props) => {
     </Text>
   ) : null;
 
-  const control = !friendView ? null : mine || overview ? (
+  // A gift marked as given is taken back from its own screen, not with a quick Undo.
+  const control = !friendView || wish.given ? null : mine || overview ? (
     <Pressable accessibilityRole="button" accessibilityLabel={t.card.undoReservation} onPress={onUnreserve} hitSlop={10}>
       <Text style={styles.undo}>{t.card.undo}</Text>
     </Pressable>

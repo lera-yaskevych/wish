@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { GivenPrompt } from '@/components/GivenPrompt';
 import { ShareListButton } from '@/components/ShareListButton';
 import { WishCard } from '@/components/WishCard';
 import { useMe } from '@/data/auth';
@@ -18,6 +19,8 @@ const MyList = () => {
   const me = useMe();
   const t = useT();
   const { data: wishes } = useMyWishes();
+  // Gifts someone has marked as given, waiting for the owner to say whether they arrived.
+  const asking = wishes?.filter((wish) => wish.given) ?? [];
 
   const header = (
     <View style={styles.header}>
@@ -40,6 +43,13 @@ const MyList = () => {
       </View>
       <Text style={type.display}>{t.myList.title}</Text>
       {wishes && <Text style={[type.sub, styles.count]}>{t.wishCount(wishes.length)}</Text>}
+      {asking.length > 0 && (
+        <View style={styles.prompts}>
+          {asking.map((wish) => (
+            <GivenPrompt key={wish.id} wish={wish} />
+          ))}
+        </View>
+      )}
     </View>
   );
 
@@ -89,6 +99,7 @@ const styles = StyleSheet.create({
   archiveLabel: { ...fonts.sans, fontSize: 16.5, color: colors.muted },
   pressed: { opacity: 0.6 },
   count: { marginTop: 8, fontSize: 16 },
+  prompts: { gap: 12, marginTop: 22 },
   gap: { height: 12 },
   fab: {
     position: 'absolute',
