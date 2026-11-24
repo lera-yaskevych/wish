@@ -4,7 +4,7 @@ import { newId, sha256Hex } from '@/lib/ids';
 
 import { DEMO_INVITE_CODE, seedUsers } from './seed';
 import { ApiError, type Api, type Profile, type User, type Wish } from './types';
-import { checkPassword, cleanProfile, cleanSignUp, cleanWish } from './validate';
+import { checkPassword, cleanNickname, cleanProfile, cleanSignUp, cleanWish } from './validate';
 
 // On-device implementation of the Api, used when no backend is configured.
 // Everything lives in AsyncStorage on this device only; nothing is shared.
@@ -13,7 +13,14 @@ const DB_KEY = 'wishlist.db.v1';
 const SESSION_KEY = 'wishlist.session';
 
 type StoredUser = User & { email: string; salt: string; passwordHash: string };
-type StoredWish = Omit<Wish, 'reservation'> & { reservedBy: string | null };
+// A wish is reserved by a member (reservedBy, their id) or by a guest from a shared link
+// (guestName, with the hash of the key their device keeps). The guest fields are optional
+// so demo data saved before they existed still loads.
+type StoredWish = Omit<Wish, 'reservation' | 'reservedBy' | 'reservedByGuest'> & {
+  reservedBy: string | null;
+  guestName?: string | null;
+  guestKeyHash?: string | null;
+};
 type Db = {
   users: StoredUser[];
   wishes: StoredWish[];
@@ -21,6 +28,19 @@ type Db = {
 };
 
 const hashPassword = (salt: string, password: string) => sha256Hex(`${salt}:${password}`);
+
+const hashGuestKey = (key: string) => sha256Hex(`guest:${key}`);
+
+// Demo data never leaves this device, so a share link only needs to name the person.
+const shareTokenOf = (userId: string) => `demo-${userId}`;
+
+const isReserved = (wish: StoredWish) => !!wish.reservedBy || !!wish.guestName;
+
+const releaseReservation = (wish: StoredWish) => {
+  wish.reservedBy = null;
+  wish.guestName = null;
+  wish.guestKeyHash = null;
+};
 
 const buildSeedDb = async (): Promise<Db> => {
   const db: Db = { users: [], wishes: [], follows: [] };
@@ -49,6 +69,9 @@ const buildSeedDb = async (): Promise<Db> => {
         createdAt: new Date(newest - index * 60_000).toISOString(),
         fulfilledAt: wish.fulfilledAt ?? null,
         reservedBy: wish.reservedBy ?? null,
+        // A key nobody holds: the demo guest's reservation can be seen but not undone.
+        guestName: wish.reservedByGuest ?? null,
+        guestKeyHash: wish.reservedByGuest ? hashGuestKey(newId()) : null,
       });
     });
   }
@@ -72,11 +95,33 @@ const loadDb = () => {
 
 const toUser = ({ id, name, username, birthday }: StoredUser): User => ({ id, name, username, birthday });
 
-const toWish = ({ reservedBy, ...wish }: StoredWish, viewerId: string): Wish => ({
+// Mirrors wishes_visible: the owner learns only that a wish is reserved, other members also by whom.
+const toWish = (db: Db, { reservedBy, guestName, guestKeyHash, ...wish }: StoredWish, viewerId: string): Wish => {
+  const reserved = !!reservedBy || !!guestName;
+  const mine = !!reservedBy && reservedBy === viewerId;
+  const name = reservedBy ? (db.users.find((u) => u.id === reservedBy)?.name ?? null) : (guestName ?? null);
+  return {
+    ...wish,
+    reservation: !reserved ? 'none' : mine ? 'mine' : 'taken',
+    reservedBy: !reserved || mine || wish.ownerId === viewerId ? null : name,
+    reservedByGuest: !reservedBy && !!guestName,
+  };
+};
+
+// Mirrors shared_wishes: a guest learns only which wishes are taken and which are theirs.
+const toGuestWish = ({ reservedBy, guestName, guestKeyHash, ...wish }: StoredWish, guestKey: string | null): Wish => ({
   ...wish,
   reservation:
-    wish.ownerId === viewerId || !reservedBy ? 'none' : reservedBy === viewerId ? 'mine' : 'taken',
+    !reservedBy && !guestName
+      ? 'none'
+      : guestKey && guestKeyHash === hashGuestKey(guestKey)
+        ? 'mine'
+        : 'taken',
+  reservedBy: null,
+  reservedByGuest: false,
 });
+
+const ownerOfToken = (db: Db, token: string) => db.users.find((u) => shareTokenOf(u.id) === token);
 
 const toProfile = (db: Db, user: StoredUser, viewerId: string): Profile => ({
   ...toUser(user),
@@ -180,7 +225,7 @@ export const localApi: Api = {
     return db.wishes
       .filter((w) => w.ownerId === viewer.id && !w.fulfilledAt)
       .sort(byNewest)
-      .map((w) => toWish(w, viewer.id));
+      .map((w) => toWish(db, w, viewer.id));
   },
 
   listArchive: async () => {
@@ -189,7 +234,7 @@ export const localApi: Api = {
     return db.wishes
       .filter((w) => w.ownerId === viewer.id && w.fulfilledAt)
       .sort((a, b) => b.fulfilledAt!.localeCompare(a.fulfilledAt!))
-      .map((w) => toWish(w, viewer.id));
+      .map((w) => toWish(db, w, viewer.id));
   },
 
   getWish: async (id) => {
@@ -198,7 +243,7 @@ export const localApi: Api = {
     const wish = db.wishes.find((w) => w.id === id);
     // Other people's fulfilled wishes are no longer visible to friends.
     if (!wish || (wish.ownerId !== viewer.id && wish.fulfilledAt)) return null;
-    return toWish(wish, viewer.id);
+    return toWish(db, wish, viewer.id);
   },
 
   createWish: async (input) => {
@@ -215,7 +260,7 @@ export const localApi: Api = {
     };
     db.wishes.push(wish);
     await saveDb(db);
-    return toWish(wish, viewer.id);
+    return toWish(db, wish, viewer.id);
   },
 
   updateWish: async (id, input) => {
@@ -224,7 +269,7 @@ export const localApi: Api = {
     const wish = requireOwnWish(db, viewer, id);
     Object.assign(wish, cleanWish(input));
     await saveDb(db);
-    return toWish(wish, viewer.id);
+    return toWish(db, wish, viewer.id);
   },
 
   deleteWish: async (id) => {
@@ -240,7 +285,7 @@ export const localApi: Api = {
     const viewer = await requireViewer(db);
     const wish = requireOwnWish(db, viewer, id);
     wish.fulfilledAt = new Date().toISOString();
-    wish.reservedBy = null;
+    releaseReservation(wish);
     await saveDb(db);
   },
 
@@ -285,7 +330,7 @@ export const localApi: Api = {
     return db.wishes
       .filter((w) => w.ownerId === userId && !w.fulfilledAt)
       .sort(byNewest)
-      .map((w) => toWish(w, viewer.id));
+      .map((w) => toWish(db, w, viewer.id));
   },
 
   follow: async (userId) => {
@@ -312,7 +357,7 @@ export const localApi: Api = {
       .sort(byNewest)
       .flatMap((w) => {
         const owner = db.users.find((u) => u.id === w.ownerId);
-        return owner ? [{ wish: toWish(w, viewer.id), owner: toUser(owner) }] : [];
+        return owner ? [{ wish: toWish(db, w, viewer.id), owner: toUser(owner) }] : [];
       });
   },
 
@@ -321,7 +366,8 @@ export const localApi: Api = {
     const viewer = await requireViewer(db);
     const wish = db.wishes.find((w) => w.id === wishId && !w.fulfilledAt);
     if (!wish || wish.ownerId === viewer.id) throw new ApiError('cannot_reserve');
-    if (wish.reservedBy && wish.reservedBy !== viewer.id) throw new ApiError('already_reserved');
+    if (wish.reservedBy === viewer.id) return;
+    if (isReserved(wish)) throw new ApiError('already_reserved');
     wish.reservedBy = viewer.id;
     await saveDb(db);
   },
@@ -331,7 +377,57 @@ export const localApi: Api = {
     const viewer = await requireViewer(db);
     const wish = db.wishes.find((w) => w.id === wishId);
     if (wish?.reservedBy !== viewer.id) return;
-    wish.reservedBy = null;
+    releaseReservation(wish);
+    await saveDb(db);
+  },
+
+  getShareToken: async (userId) => {
+    const db = await loadDb();
+    await requireViewer(db);
+    return db.users.some((u) => u.id === userId) ? shareTokenOf(userId) : null;
+  },
+
+  getSharedList: async (token, guestKey) => {
+    const db = await loadDb();
+    const owner = ownerOfToken(db, token);
+    if (!owner) return null;
+    return {
+      owner: { id: owner.id, name: owner.name },
+      wishes: db.wishes
+        .filter((w) => w.ownerId === owner.id && !w.fulfilledAt)
+        .sort(byNewest)
+        .map((w) => toGuestWish(w, guestKey)),
+    };
+  },
+
+  reserveAsGuest: async ({ token, wishId, guestKey, nickname }) => {
+    const db = await loadDb();
+    const name = cleanNickname(nickname);
+    const owner = ownerOfToken(db, token);
+    const wish = db.wishes.find((w) => w.id === wishId && w.ownerId === owner?.id && !w.fulfilledAt);
+    if (!wish) throw new ApiError('cannot_reserve');
+    const keyHash = hashGuestKey(guestKey);
+    if (wish.guestKeyHash === keyHash) return;
+    if (isReserved(wish)) throw new ApiError('already_reserved');
+    wish.guestName = name;
+    wish.guestKeyHash = keyHash;
+    await saveDb(db);
+  },
+
+  releaseGuestReservation: async (wishId) => {
+    const db = await loadDb();
+    const viewer = await requireViewer(db);
+    const wish = requireOwnWish(db, viewer, wishId);
+    if (wish.reservedBy || !wish.guestName) return;
+    releaseReservation(wish);
+    await saveDb(db);
+  },
+
+  unreserveAsGuest: async ({ wishId, guestKey }) => {
+    const db = await loadDb();
+    const wish = db.wishes.find((w) => w.id === wishId);
+    if (!wish?.guestKeyHash || wish.guestKeyHash !== hashGuestKey(guestKey)) return;
+    releaseReservation(wish);
     await saveDb(db);
   },
 };

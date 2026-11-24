@@ -47,6 +47,15 @@ export const cleanProfile = (input: { name: string; username: string; birthday: 
   return { name, username: cleanUsername(input.username), birthday: input.birthday };
 };
 
+// What a guest reserves under; the database allows the same length.
+export const NICKNAME_MAX_LENGTH = 40;
+
+export const cleanNickname = (nickname: string) => {
+  const clean = nickname.trim().slice(0, NICKNAME_MAX_LENGTH);
+  if (!clean) throw new ApiError('nickname_required');
+  return clean;
+};
+
 export const cleanWish = (input: WishInput): WishInput => {
   const title = input.title.trim();
   if (!title) throw new ApiError('title_required');

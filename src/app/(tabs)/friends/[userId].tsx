@@ -6,6 +6,7 @@ import { Avatar } from '@/components/Avatar';
 import { BackLink } from '@/components/BackLink';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { ShareListButton } from '@/components/ShareListButton';
 import { WishCard } from '@/components/WishCard';
 import { useFollow, useProfile, useReserve, useUnfollow, useUnreserve, useWishesOf } from '@/data/hooks';
 import { useT } from '@/i18n';
@@ -31,7 +32,10 @@ const FriendList = () => {
       contentContainerStyle={[styles.list, { paddingTop: insets.top + 10 }]}
       ListHeaderComponent={
         <View style={styles.header}>
-          <BackLink label={t.friends.title} to="/friends" />
+          <View style={styles.topRow}>
+            <BackLink label={t.friends.title} to="/friends" />
+            {profile && <ShareListButton userId={profile.id} name={profile.name} />}
+          </View>
           {profile && (
             <View style={styles.person}>
               <Avatar id={profile.id} name={profile.name} size={56} />
@@ -85,6 +89,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   list: { paddingHorizontal: 20, paddingBottom: 40 },
   header: { paddingHorizontal: 4, paddingBottom: 26 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   person: { flexDirection: 'row', alignItems: 'center', gap: 13, marginTop: 6 },
   personText: { flex: 1, gap: 1 },
   name: { ...fonts.serif, fontSize: 32, lineHeight: 36, letterSpacing: -0.3, color: colors.ink },

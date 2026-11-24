@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { languages, useLanguage } from '@/i18n';
 import { colors, fonts } from '@/theme';
+
+import { LanguageLinks } from './LanguageLinks';
 
 type Props = {
   children: ReactNode;
@@ -13,9 +14,6 @@ type Props = {
 
 export const AuthScreen = ({ children, footer }: Props) => {
   const insets = useSafeAreaInsets();
-  const { language, setLanguage } = useLanguage();
-  // Offers the other languages, since the profile's switch is out of reach before signing in.
-  const others = languages.filter(({ code }) => code !== language);
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
@@ -25,18 +23,7 @@ export const AuthScreen = ({ children, footer }: Props) => {
         <View>
           <View style={styles.top}>
             <Text style={styles.logo}>wish.</Text>
-            <View style={styles.languages}>
-              {others.map(({ code, label }) => (
-                <Pressable
-                  key={code}
-                  accessibilityRole="button"
-                  accessibilityLabel={label}
-                  hitSlop={8}
-                  onPress={() => setLanguage(code)}>
-                  <Text style={styles.language}>{label}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <LanguageLinks />
           </View>
           {children}
         </View>
@@ -59,7 +46,5 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: 28 },
   top: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 },
   logo: { ...fonts.serif, fontSize: 22, color: colors.accent },
-  languages: { flexDirection: 'row', gap: 16 },
-  language: { ...fonts.sans, fontSize: 14.5, color: colors.muted },
   footer: { alignItems: 'center', marginTop: 40 },
 });

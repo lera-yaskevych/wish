@@ -32,6 +32,7 @@ const errors: Record<ApiErrorCode | 'unknown', string> = {
   title_required: 'Dileğine bir ad ver.',
   cannot_reserve: 'Bu dilek ayırtılamıyor.',
   already_reserved: 'Bu dileği az önce başkası ayırttı.',
+  nickname_required: 'Başkaları kimin aldığını bilsin diye bir ad bırak.',
   invalid_invite: 'Davet kodu doğru değil. Seni davet eden kişiye sor.',
   confirm_email: 'E-postanı kontrol edip adresini onayla, sonra giriş yap.',
   email_required: 'Önce yukarıya e-postanı yaz.',
@@ -98,6 +99,7 @@ export const tr: Dictionary = {
     reserve: 'Ayırt',
     reservedByYou: 'Sen ayırttın',
     reserved: 'Ayırtıldı',
+    reservedBy: (name) => `Ayırtan: ${name}`,
     undo: 'Vazgeç',
     undoReservation: 'Ayırtmaktan vazgeç',
   },
@@ -114,9 +116,17 @@ export const tr: Dictionary = {
     reserveGift: 'Bu hediyeyi ayırt',
     alreadyReserved: 'Zaten ayırtıldı',
     takenNote: 'Bu hediyeyle başka biri ilgileniyor.',
+    takenNoteBy: (name) => `Bu hediyeyle ilgilenen: ${name}.`,
     secretNote: (name) =>
-      `${firstName(name)} kimin ayırttığını görmeyecek — diğer arkadaşlar yalnızca ayırtıldığını görecek.`,
-    secretNoteShort: (name) => `${firstName(name)} kimin ayırttığını görmeyecek.`,
+      `${firstName(name)} yalnızca ayırtıldığını görecek, kimin ayırttığını değil. Diğer arkadaşlar adını görecek.`,
+    secretNoteShort: (name) => `${firstName(name)} yalnızca ayırtıldığını görecek, kimin ayırttığını değil.`,
+    reservedForYou: 'Biri bunu senin için ayırttı',
+    fromSharedLink: 'Paylaştığın bağlantıdan, hesabı olmayan biri.',
+    removeReservation: 'Kaldır',
+    removeReservationTitle: 'Bu ayırtma kaldırılsın mı?',
+    removeReservationBody:
+      'Bunu hesabı olmayan biri paylaşılan bir bağlantıdan ayırttı. Kaldırırsan dilek yeniden ayırtılabilir. Ayırtan kişiye haber verilmez.',
+    removeReservationConfirm: 'Ayırtmayı kaldır',
     deleteTitle: 'Bu dilek silinsin mi?',
     deleteBody: (title) => `“${title}” kalıcı olarak silinecek.`,
     deleteHint: 'Hediyeyi aldıysan bunun yerine gerçekleşti olarak işaretle; arşivinde saklanır.',
@@ -180,6 +190,25 @@ export const tr: Dictionary = {
     count: (gifts, people) => `${people} kişi için ${gifts} hediye`,
     emptyTitle: 'Henüz bir şey ayırtmadın.',
     emptyBody: 'Bir arkadaşının listesinden hediye ayırttığında, unutmaman için burada durur.',
+  },
+
+  share: {
+    list: 'Listeyi paylaş',
+    copied: 'Bağlantı kopyalandı',
+    ownMessage: (link) => `Dilek listem burada. Almak istediğini ayırt: ${link}`,
+    friendMessage: (name, link) => `Dilek listesi: ${firstName(name)}. Almak istediğini ayırt: ${link}`,
+  },
+
+  shared: {
+    intro: (name) =>
+      `Alacağın hediyeyi ayırt, böylece kimse aynı şeyi iki kez almasın. ${firstName(name)} yalnızca ayırtıldığını görecek.`,
+    missingTitle: 'Bu bağlantı bir liste açmıyor.',
+    missingBody: 'Gönderen kişiden yeni bir bağlantı iste.',
+    nicknameTitle: 'Hediyeyi kim alıyor?',
+    nicknameBody: (name) => `Wish kullanan arkadaşlar bu adı hediyenin yanında görecek. ${firstName(name)} görmeyecek.`,
+    nickname: 'Adın',
+    nicknamePlaceholder: 'Ayşe teyze',
+    undoHint: 'Daha sonra bu tarayıcıdan vazgeçebilirsin.',
   },
 
   find: {

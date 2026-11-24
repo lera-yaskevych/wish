@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { ShareListButton } from '@/components/ShareListButton';
 import { WishCard } from '@/components/WishCard';
 import { useMe } from '@/data/auth';
 import { useMyWishes } from '@/data/hooks';
@@ -24,15 +25,18 @@ const MyList = () => {
         <Pressable accessibilityRole="button" accessibilityLabel={t.myList.profile} onPress={() => router.push('/profile')}>
           <Avatar id={me.id} name={me.name} size={44} plain />
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t.myList.archive}
-          hitSlop={12}
-          onPress={() => router.push('/archive')}
-          style={({ pressed }) => [styles.archive, pressed && styles.pressed]}>
-          <Archive size={18} color={colors.muted} strokeWidth={2} />
-          <Text style={styles.archiveLabel}>{t.myList.archive}</Text>
-        </Pressable>
+        <View style={styles.actions}>
+          <ShareListButton userId={me.id} name={me.name} own />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t.myList.archive}
+            hitSlop={12}
+            onPress={() => router.push('/archive')}
+            style={({ pressed }) => [styles.archive, pressed && styles.pressed]}>
+            <Archive size={18} color={colors.muted} strokeWidth={2} />
+            <Text style={styles.archiveLabel}>{t.myList.archive}</Text>
+          </Pressable>
+        </View>
       </View>
       <Text style={type.display}>{t.myList.title}</Text>
       {wishes && <Text style={[type.sub, styles.count]}>{t.wishCount(wishes.length)}</Text>}
@@ -80,6 +84,7 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 20, paddingBottom: 110 },
   header: { paddingHorizontal: 4, paddingBottom: 22 },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 22 },
   archive: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   archiveLabel: { ...fonts.sans, fontSize: 16.5, color: colors.muted },
   pressed: { opacity: 0.6 },
